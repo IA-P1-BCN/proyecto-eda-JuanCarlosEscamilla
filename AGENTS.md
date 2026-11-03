@@ -49,6 +49,7 @@ The agent never merges PRs (user merges personally). Small changes extend an OPE
 
 ## NOT TO DO STUFF
 - no credencials in code.
+- NO personal data in repo/code/data (RGPD/LOPDGDD, ADR-0004): aspirante names, DNI/NIF (even masked) or individual scores are NEVER extracted, cached or committed — only counts and aggregates, PDFs processed in memory and discarded.
 - update AGENTS.md, README.md, or docs affected by changes.
 - keep away from bloat, max 200 lines this file, keep track if progressive disclosure is used in order to be able to store more information.
 - for simple glue/setup scripts do NOT use python: use bash + jq (json parsing included). Python only when there is real logic worth testing.
