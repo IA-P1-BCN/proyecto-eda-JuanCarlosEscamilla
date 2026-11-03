@@ -10,12 +10,13 @@ import argparse
 import sys
 from pathlib import Path
 
+from eda_core import build
 from eda_ingesta import download, profile
 from eda_ingesta.crawl import Filtre
 
 STEPS = ("download", "scan", "profile", "clean", "enrich", "validate", "export")
 
-PENDIENTES = ("clean", "enrich", "validate", "export")
+PENDIENTES = ("enrich", "validate", "export")
 
 
 def _progreso(e: dict) -> None:
@@ -69,6 +70,10 @@ def main(argv: list[str] | None = None) -> int:
             r = download.run_scan(raiz, pausa=args.pausa, progreso=_progreso)
             print(f"[scan] nuevos={r.fichas_descubiertas} añadidos={r.procesos} "
                   f"hitos={r.hitos} cache={r.cache_hits} fetched={r.fetched}")
+        elif paso == "clean":
+            resumen = build.limpiar_dataset(raiz / "oposicions.csv",
+                                            Path("data/processed/oposicions_procesado.csv"))
+            print(f"[clean] {resumen}")
         elif paso == "profile":
             destino = profile.run(raiz)
             print(f"[profile] reporte en {destino}")
