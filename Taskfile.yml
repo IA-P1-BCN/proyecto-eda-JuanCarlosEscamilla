@@ -20,14 +20,24 @@ tasks:
       - uv run eda-pipeline --step all
 
   download:
-    desc: Solo ingesta (scraper CIDO + población municipal)
+    desc: Bootstrap ingesta (materia IT + Vic 45km) — progreso en vivo, reanuda por caché
     cmds:
-      - uv run eda-pipeline --step download
+      - uv run eda-pipeline --step download --pausa {{.PAUSA | default 0.5}}{{if .MAX_PAGINAS}} --max-paginas {{.MAX_PAGINAS}}{{end}}
+
+  scan-rss:
+    desc: Refresco incremental vía RSS (1 petición + solo fichas nuevas)
+    cmds:
+      - uv run eda-pipeline --step scan --pausa {{.PAUSA | default 0.5}}
 
   dashboard:
     desc: Dashboard Streamlit local (US9)
     cmds:
       - uv run streamlit run packages/eda_app/src/eda_app/app.py
+
+  dataset-release:
+    desc: Publica dataset-v<hash> como release si el CSV cambió (mismo script que Actions)
+    cmds:
+      - bash .github/scripts/dataset-release.sh
 
   airflow-up:
     desc: Stack de Airflow (docker compose) — US11

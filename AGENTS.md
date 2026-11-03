@@ -41,12 +41,15 @@ Every user story issue carries its DoD as **Acceptance Criteria: numbered, seque
 ### README progressive rule
 
 `README.md` reflects the current state: the "Estado del proyecto" checklist and run instructions are updated in the SAME PR as the user story they complete — never leave a placeholder past its story.
-## PR POLICY
-- the agent never merges PRs (no `gh pr merge`, not even `--admin`): it opens the PR with a review checklist as comment and stops
-- the user reviews and merges every PR personally; `--admin` bypass is the user's conscious decision, never the agent's
+### PR workflow
+
+The agent never merges PRs (user merges personally). Small changes extend an OPEN PR instead of opening a new one; unrelated features keep their own PR. Full policy: `docs/agents/pr-workflow.md`.
+
+## NOT TO DO STUFF
 
 ## NOT TO DO STUFF
 - no credencials in code.
+- NO personal data in repo/code/data (RGPD/LOPDGDD, ADR-0004): aspirante names, DNI/NIF (even masked) or individual scores are NEVER extracted, cached or committed — only counts and aggregates, PDFs processed in memory and discarded.
 - update AGENTS.md, README.md, or docs affected by changes.
 - keep away from bloat, max 200 lines this file, keep track if progressive disclosure is used in order to be able to store more information.
 - for simple glue/setup scripts do NOT use python: use bash + jq (json parsing included). Python only when there is real logic worth testing.

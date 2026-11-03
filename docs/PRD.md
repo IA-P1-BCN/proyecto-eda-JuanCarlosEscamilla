@@ -20,10 +20,10 @@ Convertir el registro público de procesos selectivos locales (**CIDO DIBA**, `c
 | Airflow local (Docker) + dashboard en Render | |
 
 ## 3. Riesgos principales
-1. **Scraper fragilidad** (HTML sin API): mitigación = caché resumible + tests del parser + plan B "solo resueltos".
+1. **Scraper fragilidad** (HTML sin API): mitigación = caché resumible + tests del parser + plan B "solo resueltos" + plan C: browser automation (agent-browser) si el portal añadiera JS/anti-bot — documentado, no implementado.
 2. **M4 concentra 5 US en 2,5 días**: mitigación = regla de corte definida (§ Calendario).
 3. **Presupuesto ~33 h ajustado**: lo absorbe el buffer del domingo; nunca a costa de tests/informe.
-4. **Enlaces muertos frecuentes** (reportado por el usuario; los adjuntos viven en `diba.cat/documents` y DOGC, no en CIDO) + **PDFs heterogéneos**: mitigación = reintentos con backoff, **taxonomía de errores E1/E2/E3** (caído / intranet genérica / no parseable) → informe de calidad con acción sugerida, y `n_aspirantes` solo donde el PDF exista y parsee (nulo documentado en el resto).
+4. **RGPD/LOPDGDD — datos personales de aspirantes** (ADR-0004): los PDFs de bolsa/resultados llevan nombres y NIF; nunca se extraen ni se cachean — solo recuentos y agregados calculados en memoria (ver ADR-0004). **Enlaces muertos frecuentes** (reportado por el usuario; los adjuntos viven en `diba.cat/documents` y DOGC, no en CIDO) + **PDFs heterogéneos**: mitigación = reintentos con backoff, **taxonomía de errores E1/E2/E3** (caído / intranet genérica / no parseable) → informe de calidad con acción sugerida, y `n_aspirantes` solo donde el PDF exista y parsee (nulo documentado en el resto).
 5. **El cumplimiento de ≥1.000 filas depende de la expansión de hitos** (237 procesos): mitigación = formato largo core desde US3 + fallback D5 (materias adyacentes, decisión del PO).
 
 ## 4. Roadmap y puntos de desvío (overview)
@@ -206,7 +206,7 @@ issue → branch feat/us3-scraper-cido → tests (rojo) → código (verde)
 ### US5 — Enriquecimiento y normalización 🟠
 - 🎓 Comparar totales absolutos (Barcelona ciudad siempre "gana").
 - 🏭 Joins versionados contra dimensiones certificadas; métricas normalizadas por diseño.
-- 🧪 `merge` con **población por municipio** (INE/DIBA) → `places_per_mil_hab`; enriquecer con comarca y tamaño de municipio (urbano/rural por población) para comparar segmentos; feature clave: `durada_mesos` = resolución − convocatoria. **Enriquecimiento 2 (*stretch, oportunista*): aspirantes desde PDFs** — `src/eda/pdf_aspirants.py` (pypdf): para fichas con PDF de bolsa/resultados (`publtaubor`/`restexambo`), contar filas de la tabla (patrón NIF enmascarado `***1234**` + puntuación) → `n_aspirantes` y `competencia = n_aspirantes / plazas`. Se recoge **solo si existe y parsea**; cada fallo queda clasificado (E1/E2/E3, ver US3) con acción sugerida en el informe de calidad. **Sin nombres ni NIFs en el dataset** — solo recuentos (minimización de datos, práctica de empresa).
+- 🧪 `merge` con **población por municipio** (INE/DIBA) → `places_per_mil_hab`; enriquecer con comarca y tamaño de municipio (urbano/rural por población) para comparar segmentos; feature clave: `durada_mesos` = resolución − convocatoria. **Enriquecimiento 2 (*stretch, oportunista*): aspirantes desde PDFs — bajo ADR-0004 (RGPD)** — `pdf_aspirants.py` (pypdf): descarga **en memoria** (nunca a disco/caché) de PDFs de bolsa/resultados (`publtaubor`/`restexambo`) → cuenta filas → `n_aspirantes` + puntuación **agregada** (media/mediana/max) → `competencia = n_aspirantes / plazas`. **Nunca se extraen nombres, NIF (ni enmascarados) ni puntuaciones individuales; el contenido del PDF se descarta tras el cálculo.** Cada fallo queda clasificado (E1/E2/E3) con acción sugerida. Si el parseo en memoria no es viable, el stretch muere sin sustituto.
 - **AC**: issue #5 — pasos de verificación (fuente de verdad del DoD)
 
 ### US6 — Análisis EDA + feature engineering 🟢🟡🟠

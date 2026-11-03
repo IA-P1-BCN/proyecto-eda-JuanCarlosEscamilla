@@ -1,0 +1,29 @@
+name: dataset
+
+on:
+  workflow_dispatch: {}        # botón manual — la primera importación la hizo el local
+  # schedule (cron) se activa en US11-12; ojo: 60 días sin actividad en el repo
+  # desactivan el cron automáticamente (documentado en PRD/PREREQUISITES)
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Bootstrap o scan incremental (según estado)
+        run: |
+          uv sync --frozen
+          if [ -f data/raw/ids_conocidos.txt ]; then
+            uv run eda-pipeline --step scan
+          else
+            uv run eda-pipeline --step download
+          fi
+      - name: Release si el hash cambió
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/dataset-release.sh
