@@ -12,6 +12,13 @@
 - Las features no relacionadas mantienen su propio PR — un PR, un tema. La granularidad no justifica mezclar cosas que el reviewer querría aprobar por separado.
 - Si un PR abierto acumula temas distintos a los de su título, es señal de que tocaba dividir antes, no después.
 
+## Regla 3: granularidad de commits — un commit por tarea técnica
+
+- Las stories se ejecutan como **sub-issues técnicas** (`docs/agents/issue-tracker.md`: `gh issue create --parent <story>`), derivadas de las tasks del change OpenSpec.
+- **Un commit = una tarea técnica**, con su test y su implementación juntos (el ciclo rojo→verde ocurre en el working tree; el commit registra el resultado). Referencia la sub-issue: `feat(us3): T2.1 cliente HTTP … (#<sub-issue>)`.
+- Esto mantiene el PR revisable: cada commit es un paso tachable del AC; sin él, el PR de una story es un bloque monolítico.
+- Si una tarea acaba en dos commits por despiste, no se reescribe historia: se nota y se sigue.
+
 ## Contenido mínimo de un PR
 
 1. **Título** convencional y ligado a lo que entrega (story, ADR o convención).
