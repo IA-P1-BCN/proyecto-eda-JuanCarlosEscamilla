@@ -1,0 +1,36 @@
+version: '3'
+
+# Punto de entrada único del proyecto — task --list para verlo todo.
+# Documentación viva: cada comando nuevo del proyecto entra aquí como task.
+
+tasks:
+  sync:
+    desc: Instala el monorepo completo (uv sync, un venv, un lockfile)
+    cmds:
+      - uv sync
+
+  test:
+    desc: Tests de todos los paquetes (packages/*/tests)
+    cmds:
+      - uv run pytest -q
+
+  pipeline:
+    desc: Proceso completo — descarga → limpia → enriquece → exporta
+    cmds:
+      - uv run eda-pipeline --step all
+
+  download:
+    desc: Solo ingesta (scraper CIDO + población municipal)
+    cmds:
+      - uv run eda-pipeline --step download
+
+  dashboard:
+    desc: Dashboard Streamlit local (US9)
+    cmds:
+      - uv run streamlit run packages/eda_app/src/eda_app/app.py
+
+  default:
+    desc: Lista las tareas disponibles
+    cmds:
+      - task --list
+    silent: true

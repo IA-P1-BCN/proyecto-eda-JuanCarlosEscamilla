@@ -13,21 +13,39 @@ Los datos se descargan con un scraper propio (no hay API pública) y se cachean 
 
 ## Cómo ejecutarlo
 
-*(en construcción — se completa en US2 con `uv`, el pipeline de un comando y el notebook)*
+Requiere [`task` (go-task)](https://taskfile.dev) y [`uv`](https://docs.astral.sh/uv/):
+`brew install go-task uv`
 
 ```bash
-# previsto para US2:
-uv sync              # instala las dependencias (requirements.txt)
-pytest               # tests de las funciones de limpieza
-python -m eda.pipeline   # descarga → limpia → exporta, en un comando
+task sync        # instala el monorepo completo (un venv, un lockfile)
+task test        # tests de todos los paquetes
+task pipeline    # descarga → limpia → exporta, en un comando
+task dashboard   # dashboard Streamlit local
+task --list      # todas las tareas disponibles (documentación viva)
 ```
 
-## Estructura
+## Estructura (monorepo uv — [ADR-0002](docs/adr/0002-monorepo-uv-workspaces.md))
 
 ```
-docs/PRD.md            # alcance, 12 user stories, roadmap
-docs/adr/              # decisiones registradas (elección de fuentes, limpieza…)
-docs/business/         # spec original del bootcamp
-src/eda/               # código del pipeline (scraper, limpieza, análisis)
-data/                  # crudo y procesado (gitignored)
+packages/
+├── eda_ingesta/    # lib: scraper CIDO + caché + población + profiling (US3)
+├── eda_core/       # lib: lógica de negocio — limpieza, enriquecimiento, features (US4-5)
+├── eda_pipeline/   # app: CLI "eda-pipeline" que orquesta todo
+└── eda_app/        # app: dashboard Streamlit para Render (US9)
+docs/
+├── PRD.md          # alcance, 12 user stories, roadmap
+├── adr/            # decisiones registradas (fuentes, arquitectura, limpieza…)
+└── business/       # spec original del bootcamp
+notebooks/          # (US6) análisis narrativo — importa de eda_core, no contiene lógica
 ```
+
+## Estado del proyecto
+
+*(se actualiza con cada user story — fuente: [tablero](https://github.com/orgs/IA-P1-BCN/projects/48))*
+
+- [x] US1 — Fuentes evaluadas y elegidas ([ADR-0001](docs/adr/0001-eleccion-fuentes.md))
+- [x] US2 — Entorno monorepo uv con workspaces ([ADR-0002](docs/adr/0002-monorepo-uv-workspaces.md)), CI, OpenSpec
+- [ ] US3 — Scraper CIDO + profiling
+- [ ] US4-US5 — Limpieza TDD + normalización per cápita
+- [ ] US6-US8 — EDA, visualizaciones, informe ejecutivo
+- [ ] US9-US12 — Dashboard, Render, Airflow, calidad + presentación
