@@ -1,5 +1,8 @@
 # ── datos (reproducibles con: task pipeline) ──
-data/
+data/*
+!data/reference/
+!data/reference/
+!data/reference/*
 *.html.gz
 
 # ── estado local de herramientas/agentes — nunca en el repo ──
