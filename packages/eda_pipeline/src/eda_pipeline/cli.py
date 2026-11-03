@@ -11,12 +11,13 @@ import sys
 from pathlib import Path
 
 from eda_core import build
+from eda_core.enrich import enriquir_dataset
 from eda_ingesta import download, profile
 from eda_ingesta.crawl import Filtre
 
 STEPS = ("download", "scan", "profile", "clean", "enrich", "validate", "export")
 
-PENDIENTES = ("enrich", "validate", "export")
+PENDIENTES = ("validate", "export")
 
 
 def _progreso(e: dict) -> None:
@@ -74,6 +75,12 @@ def main(argv: list[str] | None = None) -> int:
             resumen = build.limpiar_dataset(raiz / "oposicions.csv",
                                             Path("data/processed/oposicions_procesado.csv"))
             print(f"[clean] {resumen}")
+        elif paso == "enrich":
+            resumen = enriquir_dataset(Path("data/processed/oposicions_procesado.csv"),
+                                             Path("data/reference/poblacio_municipis.csv"),
+                                             Path("data/processed/oposicions_enriquit.csv"),
+                                             informe_sin_match=Path("reports/calidad-municipios.csv"))
+            print(f"[enrich] {resumen}")
         elif paso == "profile":
             destino = profile.run(raiz)
             print(f"[profile] reporte en {destino}")
