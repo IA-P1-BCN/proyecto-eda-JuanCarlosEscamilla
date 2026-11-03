@@ -10,11 +10,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from eda_ingesta import download
+from eda_ingesta import download, profile
 
 STEPS = ("download", "scan", "profile", "clean", "enrich", "validate", "export")
 
-PENDIENTES = ("profile", "clean", "enrich", "validate", "export")
+PENDIENTES = ("clean", "enrich", "validate", "export")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -40,6 +40,9 @@ def main(argv: list[str] | None = None) -> int:
             r = download.run_scan(raiz)
             print(f"[scan] nuevos={r.fichas_descubiertas} añadidos={r.procesos} "
                   f"hitos={r.hitos} cache={r.cache_hits} fetched={r.fetched}")
+        elif paso == "profile":
+            destino = profile.run(raiz)
+            print(f"[profile] reporte en {destino}")
         else:
             print(f"[pipeline] paso '{paso}': pendiente de implementar (US4+)")
     return 0
