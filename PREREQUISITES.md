@@ -18,7 +18,7 @@ Lo que necesitas instalado antes de tocar el repo. Regla del proyecto: los coman
 |---|---|---|---|
 | **[Quarto](https://quarto.org)** | US8, US12 | Informe ejecutivo → PDF + deck revealjs 5min | `brew install --cask quarto` |
 | **Docker Desktop** | US11 | Airflow local (orquestador one-click) | `brew install --cask docker` |
-| **[astro-cli](https://www.astronomer.io/docs/astro/cli/install-cli)** | US11 | CLI que dockeriza Airflow (`astro dev start`) | `brew install astro-cli` |
+| **docker compose** (incluido en Docker Desktop) | US11 | Airflow local (`docker compose -f infra/docker-compose.yml up -d`) | viene con Docker |
 | **[gh](https://cli.github.com)** | opcional | Tablero de Projects y PRs por CLI (para agentes/contribuidores) | `brew install gh` |
 
 ## Primer check (2 min)
