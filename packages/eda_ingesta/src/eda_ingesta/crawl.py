@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from urllib.parse import urljoin
+from dataclasses import dataclass
+from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
 
@@ -20,14 +21,34 @@ BASE = "https://cido.diba.cat"
 URL_LISTADO = BASE + "/oposicions"
 _RE_FICHA = re.compile(r"^/oposicions/\d+/[a-z0-9\-]+$")
 _RE_TOTAL = re.compile(r"(\d+)\s+resultat")
+_RE_PAGE = re.compile(r"page=(\d+)")
 
 
-def url_listado(materia: int = 24, pagina: int | None = None) -> str:
-    """URL del listado filtrado por materia (Informàtica. Noves tecnologies = 24)."""
-    url = (
-        f"{URL_LISTADO}?ordenacio=DEFAULT&ordre=DESC&showAs=GRID"
-        f"&filtreMateria%5Boptions%5D%5B0%5D={materia}"
-    )
+@dataclass(frozen=True)
+class Filtre:
+    """Filtro del listado — configurable por CLI/config, sin _token (nunca credenciales)."""
+
+    materia: int = 24                  # Informàtica. Noves tecnologies
+    poblacio: str = "Vic"              # epicentro de proximidad
+    km: int = 45
+    latitud: str = "41,929968"
+    longitud: str = "2,254264"
+    # estado: todas (sin filtreEstat) — el histórico completo, decisión del PO
+
+
+def url_listado(filtre: Filtre = Filtre(), pagina: int | None = None) -> str:
+    """URL del listado con todos los parámetros del filtro (materia + proximidad)."""
+    params = {
+        "ordenacio": "DEFAULT",
+        "ordre": "DESC",
+        "showAs": "GRID",
+        "filtreProximitat[poblacio]": filtre.poblacio,
+        "filtreProximitat[km]": str(filtre.km),
+        "filtreProximitat[latitud]": filtre.latitud,
+        "filtreProximitat[longitud]": filtre.longitud,
+        "filtreMateria[options][]": str(filtre.materia),
+    }
+    url = f"{URL_LISTADO}?{urlencode(params)}"
     return url + f"&page={pagina}" if pagina else url
 
 
@@ -61,7 +82,7 @@ def total_resultados(html: str) -> int | None:
 
 def crawl_listado(
     descarga: DescargaCacheada,
-    materia: int = 24,
+    filtre: Filtre = Filtre(),
     max_paginas: int | None = None,
     progreso: Callable[[dict], None] | None = None,
 ) -> list[str]:
@@ -79,7 +100,7 @@ def crawl_listado(
     """
     fichas: set[str] = set()
     paginas = 0
-    url: str | None = url_listado(materia)
+    url: str | None = url_listado(filtre)
     while url and (max_paginas is None or paginas < max_paginas):
         r = descarga.get(url)
         if r.status != 200:
@@ -94,9 +115,9 @@ def crawl_listado(
             progreso({"fase": "listado", "url": url, "pagina": paginas, "fichas": len(nuevas)})
         url = extraer_siguiente(html)
         if url and "filtreMateria" not in url:
-            m = re.search(r"page=(\d+)", url)
+            m = _RE_PAGE.search(url)
             if progreso:
                 progreso({"fase": "aviso", "detalle": "paginación perdió el filtro; reconstruida",
                           "url": url})
-            url = url_listado(materia, int(m.group(1))) if m else None
+            url = url_listado(filtre, int(m.group(1))) if m else None
     return sorted(fichas)

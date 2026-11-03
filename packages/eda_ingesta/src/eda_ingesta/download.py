@@ -19,7 +19,7 @@ from pathlib import Path
 from .adjuntos import clasificar_estado
 from .cache import CacheHtml, DescargaCacheada
 from .client import ClienteAgotado, ClienteHttp
-from .crawl import crawl_listado
+from .crawl import Filtre, crawl_listado
 from .escribir import COLUMNAS_RAW, escribir_csv_raw, escribir_log_calidad, fila_proceso_hito
 from .fichas import es_informatica, parse_ficha
 from .rss import scan_rss
@@ -33,6 +33,7 @@ class Resumen:
     procesos: int = 0
     descartadas_materia: int = 0
     hitos: int = 0
+    cortado: bool = False
 
 
 def _cliente(fetch=None, dormir=None, ahora=None) -> ClienteHttp:
@@ -109,7 +110,7 @@ def _procesar_ficha(
 
 
 def run(
-    raiz: Path, *, materia: int = 24, max_paginas: int | None = None, pausa: float = 1.0,
+    raiz: Path, *, filtre=Filtre(), max_paginas: int | None = None, pausa: float = 1.0,
     progreso=None,
     fetch=None, dormir=None, ahora=None,
 ) -> Resumen:
@@ -117,6 +118,8 @@ def run(
 
     `progreso` (opcional) recibe un dict por página del listado y por ficha
     (fase, url, hit, status, i/n, pausa) — el CLI lo imprime en stderr.
+    Un Ctrl-C (KeyboardInterrupt) guarda el CSV parcial y marca cortado=True:
+    la caché conserva el progreso y re-ejecutar continúa donde quedó.
     """
     raiz = Path(raiz)
     eventos: list[dict] = []
@@ -125,8 +128,39 @@ def run(
     descarga = DescargaCacheada(cliente, CacheHtml(raiz / "html"))
     ruta_csv = raiz / "oposicions.csv"
     conocidos = _ids_conocidos(ruta_csv, raiz)
+    resumen = Resumen()
+    procesos: list = []
+    urls_fichas: list[str] = []
+    urls: set[str] = set()
 
-    urls_fichas = crawl_listado(descarga, materia, max_paginas, progreso=progreso)
+    try:
+        urls_fichas = crawl_listado(descarga, filtre, max_paginas, progreso=progreso)
+        nuevos_rss = scan_rss(descarga, conocidos)
+        urls = set(urls_fichas) | {u for _, u in nuevos_rss}
+        _guardar_estado(raiz, conocidos | {i for i, _ in nuevos_rss})
+
+        resumen.fichas_descubiertas = len(urls)
+        total = len(urls)
+        for i, url in enumerate(sorted(urls), 1):
+            proceso = _procesar_ficha(descarga, url, resumen, eventos,
+                                      progreso=progreso, i=i, n=total, pausa=pausa)
+            if proceso is not None:
+                procesos.append(proceso)
+                resumen.hitos += len(proceso.hitos)
+    except KeyboardInterrupt:
+        resumen.cortado = True
+        if progreso:
+            progreso({"fase": "corte",
+                      "detalle": (f"INTERRUMPIDO tras {resumen.cache_hits} cache + "
+                                  f"{resumen.fetched} fetched — reanuda con task download: "
+                                  "la caché continúa donde quedó")})
+    resumen.procesos = len(procesos)
+    resumen.cache_hits = descarga.cache.hits
+    resumen.fetched = descarga.cache.misses
+
+    escribir_csv_raw(procesos, ruta_csv)
+    escribir_log_calidad(eventos, raiz / "calidad.jsonl")
+    return resumen
     nuevos_rss = scan_rss(descarga, conocidos)
     urls = set(urls_fichas) | {u for _, u in nuevos_rss}
     _guardar_estado(raiz, conocidos | {i for i, _ in nuevos_rss})

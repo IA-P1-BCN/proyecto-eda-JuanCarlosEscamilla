@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 from eda_ingesta import download, profile
+from eda_ingesta.crawl import Filtre
 
 STEPS = ("download", "scan", "profile", "clean", "enrich", "validate", "export")
 
@@ -28,6 +29,8 @@ def _progreso(e: dict) -> None:
         print(f'[listado p{e["pagina"]}] {e["fichas"]} fichas', file=sys.stderr)
     elif e["fase"] == "aviso":
         print(f'[aviso] {e["detalle"]}', file=sys.stderr)
+    elif e["fase"] == "corte":
+        print(f'[⚠ CORTE] {e["detalle"]}', file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -42,6 +45,12 @@ def main(argv: list[str] | None = None) -> int:
                         help="segundos de pausa entre peticiones al CIDO (default 1.0)")
     parser.add_argument("--max-paginas", type=int, default=None,
                         help="limita páginas del listado (bootstrap parcial para pruebas)")
+    parser.add_argument("--materia", type=int, default=24,
+                        help="materia CIDO (24 = Informàtica. Noves tecnologies)")
+    parser.add_argument("--poblacio", default="Vic", help="epicentro de proximidad (default Vic)")
+    parser.add_argument("--km", type=int, default=45, help="radio km desde el epicentro (default 45)")
+    parser.add_argument("--lat", default="41,929968", help="latitud del epicentro")
+    parser.add_argument("--lon", default="2,254264", help="longitud del epicentro")
     args = parser.parse_args(argv)
 
     # "all" ejecuta SOLO los pasos sin efectos de red; download/scan son explícitos
@@ -49,8 +58,10 @@ def main(argv: list[str] | None = None) -> int:
     raiz = Path("data/raw")
     for paso in pasos:
         if paso == "download":
-            r = download.run(raiz, pausa=args.pausa, max_paginas=args.max_paginas,
-                             progreso=_progreso)
+            filtre = Filtre(materia=args.materia, poblacio=args.poblacio, km=args.km,
+                            latitud=args.lat, longitud=args.lon)
+            r = download.run(raiz, filtre=filtre, pausa=args.pausa,
+                             max_paginas=args.max_paginas, progreso=_progreso)
             print(f"[download] descubiertas={r.fichas_descubiertas} procesos={r.procesos} "
                   f"hitos={r.hitos} descartadas={r.descartadas_materia} "
                   f"cache={r.cache_hits} fetched={r.fetched}")
