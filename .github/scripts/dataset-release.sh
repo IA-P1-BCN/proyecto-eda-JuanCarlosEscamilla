@@ -4,15 +4,20 @@
 # Requiere: gh autenticado (local: tu token; Actions: GITHUB_TOKEN).
 set -euo pipefail
 
-CSV="data/raw/oposicions.csv"
-PROFILING="reports/profiling.md"
+# Nivel: raw (bronze) | processed (silver) — task dataset-release DATA=processed
+NIVEL="${1:-raw}"
+case "$NIVEL" in
+  raw)       CSV="data/raw/oposicions.csv"; PROFILING="reports/profiling.md" ;;
+  processed) CSV="data/processed/oposicions_procesado.csv"; PROFILING="reports/profiling-processed.md" ;;
+  *) echo "nivel desconocido: $NIVEL (raw|processed)" >&2; exit 1 ;;
+esac
 REPO="${GITHUB_REPOSITORY:-IA-P1-BCN/proyecto-eda-JuanCarlosEscamilla}"
 
-[ -f "$CSV" ] || { echo "no existe $CSV — ejecuta antes: task download" >&2; exit 1; }
+[ -f "$CSV" ] || { echo "no existe $CSV — ejecuta antes: task download / task clean" >&2; exit 1; }
 
 # Tag content-addressed: mismo contenido = mismo tag = release duplicado imposible
 HASH=$(sha256sum "$CSV" | cut -c1-12)
-TAG="dataset-$HASH"
+TAG="dataset-$NIVEL-$HASH"
 FILAS=$(( $(wc -l < "$CSV") - 1 ))
 
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
@@ -21,7 +26,7 @@ if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
 fi
 
 FECHA=$(date +%F)
-NOTAS="Dataset crudo en formato largo generado desde cido.diba.cat (materia: Informàtica. Noves tecnologies).
+NOTAS="Dataset $NIVEL en formato largo generado desde cido.diba.cat (materia: Informàtica. Noves tecnologies, radio ${FILTRO_DESC:-Vic 45km}).
 
 - filas de hito: $FILAS
 - corte: $FECHA
