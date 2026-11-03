@@ -37,6 +37,9 @@ Monorepo uv workspaces (ADR-0002): `packages/eda_ingesta` (scraper/profiling) ·
 ### README progressive rule
 
 `README.md` reflects the current state: the "Estado del proyecto" checklist and run instructions are updated in the SAME PR as the user story they complete — never leave a placeholder past its story.
+## PR POLICY
+- the agent never merges PRs (no `gh pr merge`, not even `--admin`): it opens the PR with a review checklist as comment and stops
+- the user reviews and merges every PR personally; `--admin` bypass is the user's conscious decision, never the agent's
 
 ## NOT TO DO STUFF
 - no credencials in code.
