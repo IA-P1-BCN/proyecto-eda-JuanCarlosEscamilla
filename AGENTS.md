@@ -41,9 +41,11 @@ Every user story issue carries its DoD as **Acceptance Criteria: numbered, seque
 ### README progressive rule
 
 `README.md` reflects the current state: the "Estado del proyecto" checklist and run instructions are updated in the SAME PR as the user story they complete — never leave a placeholder past its story.
-## PR POLICY
-- the agent never merges PRs (no `gh pr merge`, not even `--admin`): it opens the PR with a review checklist as comment and stops
-- the user reviews and merges every PR personally; `--admin` bypass is the user's conscious decision, never the agent's
+### PR workflow
+
+The agent never merges PRs (user merges personally). Small changes extend an OPEN PR instead of opening a new one; unrelated features keep their own PR. Full policy: `docs/agents/pr-workflow.md`.
+
+## NOT TO DO STUFF
 
 ## NOT TO DO STUFF
 - no credencials in code.
