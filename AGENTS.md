@@ -14,7 +14,7 @@ Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/d
 
 Docs have distinct jobs — don't mix them: `docs/PRD.md` = scope contract (what/why, human-validated) · `openspec/specs/` = living behavior specs (how the system behaves) · `docs/adr/` = decision record (why we chose X over Y) · GitHub issues = execution tracking.
 
-- Initialize in US2 if absent: `npx openspec init` (generates `openspec/` + its own `openspec/AGENTS.md`, which is authoritative for CLI details).
+- Initialized in US2. Re-run if absent: `npx @fission-ai/openspec@latest init . --tools zcode --language es` (generates `openspec/` + `.zcode/` skills; its `openspec/AGENTS.md` is authoritative for CLI details). The npm package `openspec` alone is a 0.0.0 placeholder — always use `@fission-ai/openspec`.
 - Any behavior change starts as an OpenSpec **change proposal** (`openspec/changes/<id>/`: spec deltas + tasks) BEFORE code. No proposal, no PR.
 - Implement proposal tasks with TDD. Never edit `openspec/specs/` directly — specs only change via archived proposals.
 - `openspec validate` must pass before merge; `openspec archive` after merge folds deltas into specs.
@@ -26,6 +26,17 @@ Docs have distinct jobs — don't mix them: `docs/PRD.md` = scope contract (what
 - use conventional commits and conventional branches
 - use TDD
 
+### Repo layout
+
+Monorepo uv workspaces (ADR-0002): `packages/eda_ingesta` (scraper/profiling) · `packages/eda_core` (business logic) · `packages/eda_pipeline` (CLI) · `packages/eda_app` (streamlit). Tests live inside each package (`packages/*/tests`). Notebook at root imports `eda_core` — no logic in notebooks.
+
+### Taskfile (requirement)
+
+`Taskfile.yml` at root is the single task runner AND the living documentation of project commands. Every new command (scraper, quarto render, airflow, deploy…) gets a task in the same PR that introduces it. Docs and README point to `task --list`, never to raw commands. Requires go-task (`brew install go-task`).
+
+### README progressive rule
+
+`README.md` reflects the current state: the "Estado del proyecto" checklist and run instructions are updated in the SAME PR as the user story they complete — never leave a placeholder past its story.
 ## PR POLICY
 - the agent never merges PRs (no `gh pr merge`, not even `--admin`): it opens the PR with a review checklist as comment and stops
 - the user reviews and merges every PR personally; `--admin` bypass is the user's conscious decision, never the agent's
