@@ -4,7 +4,7 @@ Issues and specs for this repo live as GitHub issues, organised on a GitHub Proj
 
 ## Board name (canonical)
 
-The Projects board (v2) carries the **canonical project name**: `Proyecto EDA — Oposicions CIDO`. Use that exact name anywhere a project name is asked for (board, dashboards, docs). The repo slug stays `proyecto-eda-JuanCarlosEscamilla`; the board is the execution surface, `docs/PRD.md` is the scope contract.
+The Projects board (v2) carries the **canonical project name**: `projecto-eda-juanCarlosEscamilla` (orgs/IA-P1-BCN/projects/48). Use that exact name anywhere a project name is asked for (board, dashboards, docs). The repo slug stays `proyecto-eda-JuanCarlosEscamilla`; the board is the execution surface, `docs/PRD.md` is the scope contract.
 
 ## Work breakdown hierarchy
 

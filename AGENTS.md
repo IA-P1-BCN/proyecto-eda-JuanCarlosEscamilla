@@ -30,4 +30,5 @@ Docs have distinct jobs — don't mix them: `docs/PRD.md` = scope contract (what
 - no credencials in code.
 - update AGENTS.md, README.md, or docs affected by changes.
 - keep away from bloat, max 200 lines this file, keep track if progressive disclosure is used in order to be able to store more information.
+- for simple glue/setup scripts do NOT use python: use bash + jq (json parsing included). Python only when there is real logic worth testing.
 
