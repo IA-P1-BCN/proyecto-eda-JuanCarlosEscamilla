@@ -30,6 +30,10 @@ Docs have distinct jobs — don't mix them: `docs/PRD.md` = scope contract (what
 
 Monorepo uv workspaces (ADR-0002): `packages/eda_ingesta` (scraper/profiling) · `packages/eda_core` (business logic) · `packages/eda_pipeline` (CLI) · `packages/eda_app` (streamlit). Tests live inside each package (`packages/*/tests`). Notebook at root imports `eda_core` — no logic in notebooks.
 
+### Acceptance criteria
+
+Every user story issue carries its DoD as **Acceptance Criteria: numbered, sequential, verifiable steps** (runnable via `task …`, concrete paths/URLs, expected result after `→`). The AC lives in the issue body and doubles as the review checklist. Template and anti-patterns: `docs/agents/acceptance-criteria.md`.
+
 ### Taskfile (requirement)
 
 `Taskfile.yml` at root is the single task runner AND the living documentation of project commands. Every new command (scraper, quarto render, airflow, deploy…) gets a task in the same PR that introduces it. Docs and README point to `task --list`, never to raw commands. Requires go-task (`brew install go-task`).
