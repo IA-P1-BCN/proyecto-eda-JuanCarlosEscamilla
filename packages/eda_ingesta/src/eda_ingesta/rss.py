@@ -32,7 +32,8 @@ def parse_feed(xml: str) -> list[tuple[str, str]]:
     for item in ET.fromstring(xml).iter("item"):
         desc = item.findtext("description") or ""
         m = _RE_REF.search(desc)
-        link = (item.findtext("link") or "").strip()
+        link = (item.findtext("link") or "").strip().replace(
+            "http://cido.diba.cat", "https://cido.diba.cat")
         if not m or not link:
             continue
         try:

@@ -24,7 +24,8 @@ class Respuesta(NamedTuple):
     url: str
     status: int
     contenido: bytes
-    hit: bool = False  # True si vino de caché (la marca DescargaCacheada)
+    hit: bool = False  # True si vino de caché o revalidación sin cambios
+    actualizado: bool = False  # True si la revalidación detectó contenido NUEVO
 
 
 class ClienteAgotado(RuntimeError):

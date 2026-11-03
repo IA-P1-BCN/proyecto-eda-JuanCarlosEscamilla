@@ -3,7 +3,7 @@
 import csv
 from pathlib import Path
 
-from eda_ingesta.download import run, run_scan
+from eda_ingesta.download import run
 
 FIX = Path(__file__).parent / "fixtures"
 P1 = (FIX / "listado_materia24_p1.html").read_text()
@@ -62,50 +62,55 @@ def test_run_bootstrap_completo(tmp_path):
     assert {f["proceso_id"] for f in filas} == {"20230127O46", "20260601O01"}
 
 
-def test_run_idempotente_segunda_ejecucion_sin_red(tmp_path):
+def test_run_idempotente_segunda_ejecucion_mismo_dia(tmp_path):
+    from datetime import date
+
+    hoy_fijo = lambda: date(2026, 11, 3)  # noqa: E731 — sin rollo de medianoche
     t = CIDOFalso()
-    run(tmp_path, fetch=t, max_paginas=2)
-    llamadas_tras_primera = t.llamadas
+    run(tmp_path, fetch=t, max_paginas=2, hoy=hoy_fijo)
     csv_primera = (tmp_path / "oposicions.csv").read_bytes()
 
-    r2 = run(tmp_path, fetch=t, max_paginas=2)
-    assert r2.fetched == 0                    # cero peticiones de red
-    assert r2.cache_hits >= 50                # las 50 URLs de la 2ª ejecución, sin red
-    assert t.llamadas == llamadas_tras_primera
+    r2 = run(tmp_path, fetch=t, max_paginas=2, hoy=hoy_fijo)
+    assert r2.actualizadas == 0               # contenido idéntico → sin eventos
+    assert r2.cache_hits >= 50                # todo lo demás desde caché
     assert (tmp_path / "oposicions.csv").read_bytes() == csv_primera  # byte-idéntico
 
 
-def test_scan_rss_sin_novedades_toca_nada(tmp_path):
+def test_feed_detecta_ficha_actualizada(tmp_path):
+    """El feed de hoy incluye un id YA conocido cuyo contenido cambió:
+    refetch FORZADO → evento ficha_actualizada + CSV refleja el nuevo hito."""
+    import json
+    from datetime import date
+
+    hoy_fijo = lambda: date(2026, 11, 3)  # noqa: E731
     t = CIDOFalso()
-    run(tmp_path, fetch=t, max_paginas=2)
-    antes = t.llamadas
-    filas_antes = len(list(csv.DictReader((tmp_path / "oposicions.csv").open())))
+    run(tmp_path, fetch=t, max_paginas=2, hoy=hoy_fijo)  # bootstrap: cachea la ficha IT
+    antes = len(list(csv.DictReader((tmp_path / "oposicions.csv").open())))
 
-    r = run_scan(tmp_path, fetch=t)
-    assert r.fichas_descubiertas == 0
-    assert r.fetched == 0                     # el feed salió de caché
-    assert t.llamadas == antes
-    assert len(list(csv.DictReader((tmp_path / "oposicions.csv").open()))) == filas_antes
+    # la ficha IT "cambia" (nuevo hito) y el feed de hoy la incluye (id 20230127O46)
+    ficha_v2 = FICHA_IT.replace(
+        "</table>",
+        """<tr><td><time datetime="2026-11-04">04/11/2026</time></td><td>BOP</td><td>99</td>
+           <td>Resolució provisional</td><td><a href="https://www.diba.cat/documents/x.pdf">PDF</a></td></tr></table>""")
+    item_feed = """<item><title>Borsa IT actualizada</title>
+      <description><![CDATA[<p><strong>Número de referència: </strong> 20230127O46</p>]]></description>
+      <link>https://cido.diba.cat/oposicions/14783298/borsa-de-treball-de-places-de-tecnic-superior-informatica-diversos-perfils-especialitzats-diputacio-de-barcelona</link></item>"""
+    feed2 = FEED.replace("</channel>", item_feed + "\n</channel>")
 
+    class T2(CIDOFalso):
+        def __init__(self):
+            super().__init__(feed=feed2)
 
-def test_scan_rss_añade_ficha_nueva_it(tmp_path):
-    # seed: CSV solo con los ids conocidos del feed, excepto uno que "se publica hoy"
-    conocidos = {"20260212O24", "20261016O14", "20261028O10", "20260701O16"}
-    seed = tmp_path / "oposicions.csv"
-    with seed.open("w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["proceso_id"] + ["x"] * 15)
-        for c in conocidos:
-            w.writerow([c] + [""] * 15)
+        def __call__(self, url, headers):
+            if "14783298" in url:
+                return 200, ficha_v2.encode(), {}
+            return super().__call__(url, headers)
+    t2 = T2()
 
-    # el feed "de hoy" incluye el item nuevo (sintético) que no está sembrado
-    item_nuevo = """<item><title>1 plaça de fake informatic</title>
-      <description><![CDATA[<p><strong>Número de referència: </strong> 20260601O01</p>]]></description>
-      <link>http://cido.diba.cat/oposicions/90000001/placa-fake-informatica-a</link></item>"""
-    feed2 = FEED.replace("</channel>", item_nuevo + "\n</channel>")
-
-    r = run_scan(tmp_path, fetch=CIDOFalso(feed=feed2))
-    assert r.fichas_descubiertas >= 8         # 11 del feed + 1 nueva − 4 sembradas
-    assert r.procesos == 1                    # solo la sintética IT se añade
-    filas = list(csv.DictReader(seed.open()))
-    assert any(f["proceso_id"] == "20260601O01" for f in filas)
+    r = run(tmp_path, fetch=t2, max_paginas=2, hoy=hoy_fijo)
+    assert r.actualizadas == 1
+    eventos = [json.loads(l) for l in (tmp_path / "calidad.jsonl").read_text().splitlines()]
+    assert any(e["tipo"] == "ficha_actualizada" for e in eventos)
+    despues = len(list(csv.DictReader((tmp_path / "oposicions.csv").open())))
+    assert despues == antes + 1  # el nuevo hito entra en formato largo
+    assert t2.llamadas > 0       # hubo refetch forzado (red sí, aunque cacheaba)

@@ -29,7 +29,7 @@ def test_profile_step_escribe_reporte(monkeypatch, capsys, tmp_path):
 
 def test_all_no_toca_red(monkeypatch, capsys):
     """'all' ejecuta solo pasos pendientes: download/scan/profile NO se llaman."""
-    for mod, nombre in ((cli.download, "run"), (cli.download, "run_scan"), (cli.profile, "run")):
+    for mod, nombre in ((cli.download, "run"), (cli.profile, "run")):
         monkeypatch.setattr(mod, nombre, lambda *a, **k: pytest.fail("no debe llamarse"))
     assert cli.main(["--step", "all"]) == 0
     assert "pendiente de implementar (US4+)" in capsys.readouterr().out
