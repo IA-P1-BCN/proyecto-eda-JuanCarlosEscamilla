@@ -17,9 +17,20 @@ Lo que necesitas instalado antes de tocar el repo. Regla del proyecto: los coman
 | Herramienta | Fase | Para qué | Instalar |
 |---|---|---|---|
 | **[Quarto](https://quarto.org)** | US8, US12 | Informe ejecutivo → PDF + deck revealjs 5min | `brew install --cask quarto` |
-| **Docker Desktop** | US11 | Airflow local (orquestador one-click) | `brew install --cask docker` |
+| **Docker (runtime)** | US11 | Airflow local (orquestador one-click) | **macOS: [colima](https://github.com/abiosoft/colima)** — `brew install colima docker docker-compose` (ligero, CLI-only; Docker Desktop vale como alternativa). Linux: docker engine nativo |
 | **docker compose** (incluido en Docker Desktop) | US11 | Airflow local (`docker compose -f infra/docker-compose.yml up -d`) | viene con Docker |
 | **[gh](https://cli.github.com)** | opcional | Tablero de Projects y PRs por CLI (para agentes/contribuidores) | `brew install gh` |
+
+### Nota colima (macOS) para US11
+
+Colima arranca con recursos por defecto (2 GB) que se quedan cortos para Airflow + postgres. Para la fase de orquestación:
+
+```bash
+colima start --cpu 4 --memory 8   # 8 GB de RAM para el stack de Airflow
+docker info                        # verifica que el contexto docker apunta a colima
+```
+
+Si `docker compose` no está disponible: `brew install docker-compose` y activa el plugin (`~/.docker/config.json` → `"cliPluginsExtraDirs"`), o usa `docker-compose` binario.
 
 ## Primer check (2 min)
 
