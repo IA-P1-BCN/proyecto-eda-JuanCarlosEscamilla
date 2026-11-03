@@ -14,7 +14,7 @@ Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/d
 
 Docs have distinct jobs — don't mix them: `docs/PRD.md` = scope contract (what/why, human-validated) · `openspec/specs/` = living behavior specs (how the system behaves) · `docs/adr/` = decision record (why we chose X over Y) · GitHub issues = execution tracking.
 
-- Initialize in US2 if absent: `npx openspec init` (generates `openspec/` + its own `openspec/AGENTS.md`, which is authoritative for CLI details).
+- Initialized in US2. Re-run if absent: `npx @fission-ai/openspec@latest init . --tools zcode --language es` (generates `openspec/` + `.zcode/` skills; its `openspec/AGENTS.md` is authoritative for CLI details). The npm package `openspec` alone is a 0.0.0 placeholder — always use `@fission-ai/openspec`.
 - Any behavior change starts as an OpenSpec **change proposal** (`openspec/changes/<id>/`: spec deltas + tasks) BEFORE code. No proposal, no PR.
 - Implement proposal tasks with TDD. Never edit `openspec/specs/` directly — specs only change via archived proposals.
 - `openspec validate` must pass before merge; `openspec archive` after merge folds deltas into specs.

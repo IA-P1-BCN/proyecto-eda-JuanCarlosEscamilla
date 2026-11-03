@@ -1,0 +1,19 @@
+# datos (crudo y procesado — reproducibles con el pipeline)
+data/
+# html cacheado del scraper
+*.html.gz
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+
+# notebooks
+.ipynb_checkpoints/
+
+# entornos y sistema
+.DS_Store
+.env
