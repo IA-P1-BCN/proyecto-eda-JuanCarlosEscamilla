@@ -26,6 +26,10 @@ Docs have distinct jobs — don't mix them: `docs/PRD.md` = scope contract (what
 - use conventional commits and conventional branches
 - use TDD
 
+## PR POLICY
+- the agent never merges PRs (no `gh pr merge`, not even `--admin`): it opens the PR with a review checklist as comment and stops
+- the user reviews and merges every PR personally; `--admin` bypass is the user's conscious decision, never the agent's
+
 ## NOT TO DO STUFF
 - no credencials in code.
 - update AGENTS.md, README.md, or docs affected by changes.
