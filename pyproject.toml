@@ -1,30 +1,27 @@
 [project]
 name = "eda-oposicions"
 version = "0.1.0"
-description = "EDA de procesos selectivos IT en ayuntamientos de la provincia de Barcelona (CIDO DIBA)"
+description = "Monorepo del EDA de procesos selectivos IT en ayuntamientos de la provincia de Barcelona (CIDO DIBA)"
 requires-python = ">=3.12"
 dependencies = [
-    "pandas>=2.2",
-    "numpy>=1.26",
-    "requests>=2.32",
-    "beautifulsoup4>=4.12",
-    "pypdf>=5.0",
-    "matplotlib>=3.9",
-    "seaborn>=0.13",
-    "plotly>=5.24",
-    "streamlit>=1.40",
+    "eda-ingesta",
+    "eda-core",
+    "eda-pipeline",
+    "eda-app",
     "jupyter>=1.1",
 ]
 
 [dependency-groups]
 dev = ["pytest>=8.3"]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.uv.workspace]
+members = ["packages/*"]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/eda"]
+[tool.uv.sources]
+eda-ingesta = { workspace = true }
+eda-core = { workspace = true }
+eda-pipeline = { workspace = true }
+eda-app = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["packages/*/tests"]

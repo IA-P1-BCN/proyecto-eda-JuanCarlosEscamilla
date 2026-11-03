@@ -1,0 +1,23 @@
+[project]
+name = "eda-pipeline"
+version = "0.1.0"
+description = "CLI del pipeline: descarga → limpia → enriquece → exporta, en un comando"
+requires-python = ">=3.12"
+dependencies = [
+    "eda-ingesta",
+    "eda-core",
+]
+
+[project.scripts]
+eda-pipeline = "eda_pipeline.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eda_pipeline"]
+
+[tool.uv.sources]
+eda-ingesta = { workspace = true }
+eda-core = { workspace = true }

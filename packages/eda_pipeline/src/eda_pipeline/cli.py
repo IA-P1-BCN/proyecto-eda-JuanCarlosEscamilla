@@ -1,7 +1,7 @@
-"""Punto de entrada del pipeline: un comando, todo el proceso.
+"""CLI del pipeline: un comando, todo el proceso.
 
-Los pasos reales (download, profile, clean, enrich, export) se implementan
-en US3+ con TDD; cada uno vivirá en su módulo (eda.download, eda.clean…).
+Los pasos reales (download, profile, clean, enrich, validate, export) se
+implementan en US3+ con TDD; cada uno vive en su paquete (eda_ingesta, eda_core).
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ STEPS = ("download", "profile", "clean", "enrich", "validate", "export")
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="eda.pipeline", description=__doc__)
+    parser = argparse.ArgumentParser(prog="eda-pipeline", description=__doc__)
     parser.add_argument(
         "--step",
         choices=(*STEPS, "all"),
