@@ -29,6 +29,11 @@ tasks:
     cmds:
       - uv run streamlit run packages/eda_app/src/eda_app/app.py
 
+  dataset-release:
+    desc: Publica dataset-v<hash> como release si el CSV cambió (mismo script que Actions)
+    cmds:
+      - bash .github/scripts/dataset-release.sh
+
   airflow-up:
     desc: Stack de Airflow (docker compose) — US11
     cmds:
