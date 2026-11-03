@@ -29,6 +29,18 @@ tasks:
     cmds:
       - uv run streamlit run packages/eda_app/src/eda_app/app.py
 
+  airflow-up:
+    desc: Stack de Airflow (docker compose) — US11
+    cmds:
+      - docker compose -f infra/docker-compose.yml up -d
+      - cmd: echo "UI → http://localhost:8080 (admin/admin)"
+        silent: true
+
+  airflow-down:
+    desc: Para el stack de Airflow
+    cmds:
+      - docker compose -f infra/docker-compose.yml down
+
   default:
     desc: Lista las tareas disponibles
     cmds:

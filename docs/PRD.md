@@ -274,35 +274,9 @@ Render puede desplegar con este Dockerfile (`render.yaml`, servicio web free, `d
 
 ## Apéndice B — Airflow REAL con docker-compose propio
 
-Infra explícita en el repo (mismo patrón que una empresa; astro-cli es compose debajo, pero opaco). Boceto — la versión completa se construye en US11:
+Infra explícita en el repo: **`infra/docker-compose.yml`** (ya creado y validado con `docker compose config`; los contenedores se levantan en US11 cuando el DAG exista). Postgres como metadata DB, `LocalExecutor`, volúmenes a `./packages`, `./data` y `./airflow/dags` — el monorepo es importable dentro de los contenedores vía `PYTHONPATH`. Tareas del Taskfile: `task airflow-up` / `task airflow-down`; UI en localhost:8080 (admin/admin, usuario creado por el servicio `airflow-init`).
 
-```yaml
-# infra/docker-compose.yml (boceto US11)
-services:
-  postgres:                      # metadata de Airflow
-    image: postgres:16
-    environment: {POSTGRES_USER: airflow, POSTGRES_DB: airflow}
-  airflow-scheduler:
-    image: apache/airflow:2.9
-    depends_on: [postgres]
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow@postgres/airflow
-    volumes: ["./packages:/opt/airflow/packages", "./data:/opt/airflow/data", "./airflow/dags:/opt/airflow/dags"]
-    command: scheduler
-  airflow-webserver:
-    image: apache/airflow:2.9
-    depends_on: [airflow-scheduler]
-    ports: ["8080:8080"]
-    volumes: ["./airflow/dags:/opt/airflow/dags"]
-    command: webserver
-```
-
-```bash
-docker compose -f infra/docker-compose.yml up -d   # one command (task airflow-up)
-```
-
-*PREREQUISITES.md actualizado: docker compose (incluido en Docker Desktop) sustituye a astro-cli.*
+*PREREQUISITES.md: macOS → colima con `--cpu 4 --memory 8` (el default de 2 GB se queda corto para Airflow).*
 *Motor de datos: pandas — sin Spark por diseño (ADR-0003: ~2.000 filas; trigger de revisión >10⁶).*
 
 El DAG (`airflow/dags/eda_oposicions.py`) llama a los **mismos módulos** que `python -m eda.pipeline` — no hay lógica duplicada, solo orquestación encima:
