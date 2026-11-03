@@ -161,7 +161,7 @@ issue → branch feat/us3-scraper-cido → tests (rojo) → código (verde)
       → PR → CI pytest verde → review → merge a main → issue cerrado
 ```
 
-**Definition of Done común** (además de la específica de cada historia):
+**Definition of Done común** (además del **AC de la issue**, que es la fuente de verdad — formato y proceso en `docs/agents/acceptance-criteria.md`):
 
 - [ ] Tests escritos antes que la función y en verde
 - [ ] Notebook (si toca) se ejecuta Restart & Run All sin errores
@@ -183,76 +183,77 @@ issue → branch feat/us3-scraper-cido → tests (rojo) → código (verde)
   2. *¿Dónde están los puestos IT y cómo está la competencia?* (plazas por municipio normalizadas por población: rural vs urbano · competencia = aspirantes/plaza **donde el PDF de bolsa exista**)
   3. *¿Qué perfil IT piden los ayuntamientos y cuándo?* (grupos de titulación — ¿FP (C1/C2) o grado/posgrado (A1/A2)? — + estacionalidad de convocatorias)
 - **Límite documentado**: sin identidades de aspirantes (nombres/NIF completos) — solo recuentos y puntuaciones agregadas de los PDFs públicos de bolsa/resultados; procesos sin PDF válido → `n_aspirantes` nulo y documentado.
-- **DoD**: tabla de evaluación + ADR-0001 mergeado + fuentes elegidas documentadas en README.
+- **AC**: issue #1 — pasos de verificación (fuente de verdad del DoD)
 
 ### US2 — Entorno y repo reproducible 🟢
 - 🎓 `pip install` global, "works on my machine".
 - 🏭 Entornos pinned, lockfile, CI desde el primer commit.
 - 🧪 `uv` venv + `requirements.txt` generado + `.gitignore` (`data/`, `.venv`) + estructura `src/eda/` + GitHub Actions que lanza `pytest` en cada PR + tablero de Issues (4 milestones M1–M4, 12 stories, sub-issues técnicas).
-- **DoD**: CI en verde en un PR trivial; `uv sync` + `pytest` funcionan en limpio.
+- **AC**: issue #2 — pasos de verificación (fuente de verdad del DoD)
 
 ### US3 — Ingesta reproducible y profiling 🟢🔴
 - 🎓 Descargar un CSV a mano y re-descargar cada sesión.
 - 🏭 Orquestación (Airflow), zona raw inmutable en S3, cargas incrementales, reintentos.
 - 🧪 **No hay API: hay que scrapea** (como en muchas empresas reales). `src/eda/scrape.py` con `requests` + `BeautifulSoup`: filtra por **materia 24 (Informàtica. Noves tecnologies)** → ~5 páginas de listado y **237 fichas** (crawl ligero); **educado** (pausa entre peticiones, User-Agent propio), **resumible** (cache HTML en `data/raw/html/`, no re-pide lo ya descargado), **idempotente** (re-ejecutar no duplica). Los adjuntos viven en `diba.cat/documents` y DOGC: cada enlace se registra con su **slug semántico** (`publtaubor`, `restexambo`, `listexamop`…) y los fallos se **clasifican para acción** en el informe de calidad: `E1 caído` (404/timeout tras reintentos) · `E2 intranet genérica` (enlaza al portal del ayuntamiento, no al documento concreto) · `E3 PDF no parseable` (formato inesperado). `src/eda/profile.py` → reporte de nulos/tipos/valores raros por campo, insumo del informe de calidad.
-- **DoD**: `python -m eda.pipeline --step download` llena `data/raw/` (HTML cacheado + `oposicions.parquet/csv` crudo: 237 procesos con hitos en formato largo + enlaces clasificados por slug y estado E1/E2/E3); profiling exportado; una segunda ejecución no re-descarga nada (verificable por test).
+- **AC**: issue #3 — pasos de verificación (fuente de verdad del DoD)
 
 ### US4 — Limpieza con TDD 🟢🟡🔴
 - 🎓 Arreglos celda a celda, sin registrar el porqué.
 - 🏭 Capa de transformaciones versionada (dbt), cada regla revisada e idempotente.
 - 🧪 Funciones puras en `src/eda/clean.py`, **test primero para cada una**: parsear la fecha de convocatoria desde el identificador (`20230127O46` → 2023-01-27) y validarla contra las fechas de la ficha; extraer plazas del título ("N placa/places de…" — catalán y castellano); normalizar categorías (grupos de titulación A1…C2, sistema de selección); fechas dd/mm/yyyy → datetime; procesos sin hitos de resolución (¿incompletos o vigentes?). Cada decisión grande = un ADR (`docs/adr/`).
-- **DoD**: suite pytest en verde; ADR-0002..0004 (parseo ID/título, categorías, fechas/faltantes) mergeados.
+- **AC**: issue #4 — pasos de verificación (fuente de verdad del DoD)
 
 ### US5 — Enriquecimiento y normalización 🟠
 - 🎓 Comparar totales absolutos (Barcelona ciudad siempre "gana").
 - 🏭 Joins versionados contra dimensiones certificadas; métricas normalizadas por diseño.
 - 🧪 `merge` con **población por municipio** (INE/DIBA) → `places_per_mil_hab`; enriquecer con comarca y tamaño de municipio (urbano/rural por población) para comparar segmentos; feature clave: `durada_mesos` = resolución − convocatoria. **Enriquecimiento 2 (*stretch, oportunista*): aspirantes desde PDFs** — `src/eda/pdf_aspirants.py` (pypdf): para fichas con PDF de bolsa/resultados (`publtaubor`/`restexambo`), contar filas de la tabla (patrón NIF enmascarado `***1234**` + puntuación) → `n_aspirantes` y `competencia = n_aspirantes / plazas`. Se recoge **solo si existe y parsea**; cada fallo queda clasificado (E1/E2/E3, ver US3) con acción sugerida en el informe de calidad. **Sin nombres ni NIFs en el dataset** — solo recuentos (minimización de datos, práctica de empresa).
-- **DoD**: tests del merge (municipios sin match → fila en informe de calidad, no silencio) + tests del parser de PDF (fixture con tabla sintética y un PDF real cacheado) + nuevas columnas documentadas en GLOSSARY.
+- **AC**: issue #5 — pasos de verificación (fuente de verdad del DoD)
 
 ### US6 — Análisis EDA + feature engineering 🟢🟡🟠
 - 🎓 Celdas ad-hoc; el resultado vive solo en el notebook.
 - 🏭 Notebooks solo para explorar; lo reutilizable se promueve a módulo revisado.
 - 🧪 Notebook narrativo (markdown entre celdas) que **importa** la lógica de `src/eda/`: univariado (≥3 variables: duración, plazas, grupo de titulación), bivariado (≥3: duración por grupo/sistema, plazas vs población, mes de convocatoria vs grupo), outliers por IQR (duraciones extremas: ¿procesos atascados?), `groupby`/`agg`/`pivot_table`, ≥3 features nuevas, matriz de correlación + heatmap, tendencias temporales (convocatorias por mes/año) con transformación justificada (**media móvil 12 meses** sobre la serie mensual, o **escala log** para la distribución sesgada de duraciones). Responde por escrito las 3 preguntas de US1.
-- **DoD**: Restart & Run All limpio; cada pregunta respondida en una celda markdown con el gráfico que la respalda.
+- **AC**: issue #6 — pasos de verificación (fuente de verdad del DoD)
 
 ### US7 — Visualizaciones 🟢🟠
 - 🎓 5 gráficos con los colores por defecto.
 - 🏭 Sistema de diseño, tipo de gráfico elegido por pregunta, accesibilidad.
 - 🧪 Estáticos (matplotlib/seaborn) para el informe + interactivos (plotly) para el dashboard; una función de estilo compartida; ≥5 con título, ejes y leyenda. Estrellas previstas: boxplot de duración por grupo de titulación, ranking de municipios en plazas per cápita, heatmap de estacionalidad (mes × año), serie mensual con media móvil.
-- **DoD**: cada gráfico nombra la pregunta que responde; los plotly se exportan para el dashboard.
+- **AC**: issue #7 — pasos de verificación (fuente de verdad del DoD)
 
 ### US8 — Informe ejecutivo 🟡🔴
 - 🎓 Capturas de notebook pegadas en un doc.
 - 🏭 Narrativa dirigida a decisiones ("so what"), rebuild con un comando.
 - 🧪 Quarto: `docs/informe/informe.md` → PDF de 1–2 páginas con 3–4 gráficos, cero código, estructura de historia (situación → hallazgo → recomendación). Auditor: "el CEO no lee código".
-- **DoD**: `quarto render` regenera el PDF; una persona no-técnica lo entiende sin ayuda.
+- **AC**: issue #8 — pasos de verificación (fuente de verdad del DoD)
 
 ### US9 — Dashboard interactivo 🔴🟠
 - 🎓 "Aquí tienes mi repo".
 - 🏭 App desplegada, acceso controlado, monitorizada.
 - 🧪 Streamlit (`app.py` + `src/eda/`): el CEO filtra por municipio/grupo de titulación/estado/fecha y ve los KPIs (duración media por grupo, plazas per cápita, calendario de convocatorias); usa el dataset limpio del pipeline, sin recompute del EDA.
-- **DoD**: `streamlit run app.py` local; filtros y KPIs funcionan con datos limpios.
+- **AC**: issue #9 — pasos de verificación (fuente de verdad del DoD)
 
 ### US10 — Deploy y publicación 🔴🧪
 - 🎓 URL del repo como "entrega".
 - 🏭 CI/CD desde `main`, contenedor, rollbacks, monitoreo.
 - 🧪 **Docker real** (Dockerfile abajo) + **render.yaml** → Render builda la imagen y auto-despliega desde `main`; URL pública. Informe + slides como static site (Render static o Pages mirror). *Free tier: duerme a los 15 min; ~30 s de cold start — aceptable para demo.*
-- **DoD**: push a `main` → deploy automático verificado con la URL pública abierta en limpio (incógnito).
+- **AC**: issue #10 — pasos de verificación (fuente de verdad del DoD)
 
 ### US11 — Orquestación real con Airflow (Docker) 🔴🧪
 *En producción nadie ejecuta el proceso a mano: un orquestador lo corre, lo monitoriza y lo reintenta. Aquí lo hacemos con el mismo software que usa una empresa.*
 
 - 🎓 **Clase**: nada — un notebook corrido a mano y listo.
 - 🏭 **Empresa**: Airflow en un servicio gestionado (Astronomer, MWAA, Composer), DAGs programados, alertas, UI de monitoreo.
-- 🧪 **Ejercicio production-way**: **Airflow real corriendo en Docker** (astro-cli, ver Apéndice B). El DAG `eda_oposicions` ejecuta NUESTROS módulos de `src/eda/` (scan/download → profile → clean → enrich → validate → export) con `data/` montado por volumen — **ingesta incremental sobre una fuente viva**: el scan detecta procesos nuevos o con nuevos hitos BOP y solo descarga lo que falta (idempotencia de verdad, no re-scrapear 1.000 fichas). **One click** = botón ▶ en la UI de Airflow (localhost:8080): el graph view pinta cada tarea en verde mientras TODO el proceso corre — escanear, limpiar, validar y exportar. Eso es el reflejo de prod.
+- 🧪 **Ejercicio production-way**: **Airflow real con docker-compose propio** (ver Apéndice B — infra explícita, no CLI mágica): `webserver + scheduler + postgres` con volúmenes a `./packages` y `./data`. El DAG `eda_oposicions` ejecuta NUESTROS módulos de los paquetes (scan/download → profile → clean → enrich → validate → export) — **ingesta incremental sobre una fuente viva**: el scan detecta procesos nuevos o con nuevos hitos BOP y solo descarga lo que falta (idempotencia de verdad). **One click** = botón ▶ en la UI de Airflow (localhost:8080): el graph view pinta cada tarea en verde mientras TODO el proceso corre — escanear, limpiar, validar y exportar. Eso es el reflejo de prod. *(Sin Spark por diseño — umbral documentado en ADR-0003.)*
 - **Conceptos que pasan de teoría a práctica**: idempotencia (re-ejecutar no duplica), dependencias entre tareas, logs por tarea, reintentos, catchup.
-- **DoD**: `astro dev start` → DAG end-to-end en verde en la UI → artefactos regenerados (`data/processed/` + reporte) → README documenta los 3 comandos.
+- **DoD**: `docker compose -f infra/docker-compose.yml up -d` → DAG end-to-end en verde en la UI (localhost:8080) → artefactos regenerados (`data/processed/` + reporte) → README documenta `task airflow-up` y los comandos.
+- **AC**: issue #11 — pasos de verificación (fuente de verdad del DoD)
 
 ### US12 — Informe de calidad + presentación 🔴
 - 🎓 "Los datos estaban sucios y los limpié".
 - 🏭 Data quality report con pendientes y riesgos; comité de comunicación del hallazgo.
 - 🧪 `docs/informe-calidad-datos.md` (qué faltaba, qué se corrigió, qué quedó pendiente y por qué — resume los ADRs) + deck revealjs de 5 min con storytelling para público no técnico (Quarto presentation).
-- **DoD**: el informe de calidad responde "¿qué NO sabemos aún?"; el deck cuenta UN hallazgo principal en 5 min.
+- **AC**: issue #12 — pasos de verificación (fuente de verdad del DoD)
 
 ---
 
@@ -272,17 +273,12 @@ CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0
 
 Render puede desplegar con este Dockerfile (`render.yaml`, servicio web free, `dockerfilePath: ./Dockerfile`, `autoDeploy: true` desde `main`).
 
-## Apéndice B — Airflow REAL en Docker (astro-cli)
+## Apéndice B — Airflow REAL con docker-compose propio
 
-Setup una vez (~30 min la primera vez, luego segundos):
+Infra explícita en el repo: **`infra/docker-compose.yml`** (ya creado y validado con `docker compose config`; los contenedores se levantan en US11 cuando el DAG exista). Postgres como metadata DB, `LocalExecutor`, volúmenes a `./packages`, `./data` y `./airflow/dags` — el monorepo es importable dentro de los contenedores vía `PYTHONPATH`. Tareas del Taskfile: `task airflow-up` / `task airflow-down`; UI en localhost:8080 (admin/admin, usuario creado por el servicio `airflow-init`).
 
-```bash
-brew install astro-cli          # CLI de Astronomer: Airflow dockerizado listo
-astro dev init                  # crea airflow/ (dags/, .env, docker-compose base)
-# montar nuestro código y datos: añadir volumes en el docker-compose override
-#   ./src:/project/src  y  ./data:/project/data
-astro dev start                 # levanta webserver + scheduler + postgres (Docker)
-```
+*PREREQUISITES.md: macOS → colima con `--cpu 4 --memory 8` (el default de 2 GB se queda corto para Airflow).*
+*Motor de datos: pandas — sin Spark por diseño (ADR-0003: ~2.000 filas; trigger de revisión >10⁶).*
 
 El DAG (`airflow/dags/eda_oposicions.py`) llama a los **mismos módulos** que `python -m eda.pipeline` — no hay lógica duplicada, solo orquestación encima:
 
@@ -323,7 +319,7 @@ Docker es **el mismo software**, sin coste.
 | Airflow gestionado (Astronomer, MWAA, Composer) | Orquestación en la nube, alertas, SLAs | Corremos Airflow local con Docker (US11) — mismo software |
 | Monitoreo (Datadog…) | Alertas de caída del pipeline | Render notifica fallos de deploy |
 
-## Calendario (~33 h, entrega ~dom 9 nov)
+## Calendario (~34 h, entrega ~dom 9 nov)
 
 | Día | Historias | Horas |
 |---|---|---|
@@ -333,9 +329,9 @@ Docker es **el mismo software**, sin coste.
 | Jue 6 | US6 (EDA completo en notebook) | 5 |
 | Vie 7 | US7 + US8 (gráficos + informe PDF) | 5 |
 | Sáb 8 | US9 + US10 (dashboard + Render) | 5 |
-| Dom 9 | US11 (Airflow one-click) + US12 + pulido | 4 + buffer |
+| Dom 9 | US11 (Airflow one-click) + US12 + pulido | 5 + buffer |
 
-*El presupuesto se mantiene ~33 h: el filtro materia 24 aligera el crawl (237 fichas en vez de ~1.000, −2 h) y compensa el stretch de PDFs de aspirantes (+2 h). Sobre las 30 h originales, el sobrecoste restante es Airflow real (+2-3 h).*
+*El presupuesto se mantiene en ~34 h: el filtro materia 24 aligera el crawl (237 fichas en vez de ~1.000, −2 h) y compensa el stretch de PDFs de aspirantes (+2 h). Sobre las 30 h originales, el sobrecoste es Airflow real con docker-compose propio (+3-4 h). El domingo absorbe el ajuste.*
 
 **Regla de corte si falta tiempo** (en este orden): 1º cae la orquestación Airflow
 (queda `python -m eda.pipeline`: un solo comando, mismo proceso, sin UI); 2º cae el
