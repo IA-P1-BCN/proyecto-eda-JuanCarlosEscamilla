@@ -72,3 +72,20 @@ def durada_mesos(fecha_convocatoria: date | None, hitos: list[dict]) -> float | 
     if resolucion is None:
         return None
     return round((resolucion - fecha_convocatoria).days / 30.44, 1)
+
+
+def dedup_hitos(filas: list[dict]) -> list[dict]:
+    """Elimina hitos duplicados por (proceso_id, hito_fecha, hito_titulo).
+
+    El portal repite anuncios (96 duplicados reales): se conserva la PRIMERA
+    aparición (la variante posterior suele ser la plantilla sin datos).
+    """
+    vistas: set[tuple[str, str, str]] = set()
+    únicas = []
+    for fila in filas:
+        clave = (fila["proceso_id"], fila["hito_fecha"], fila["hito_titulo"])
+        if clave in vistas:
+            continue
+        vistas.add(clave)
+        únicas.append(fila)
+    return únicas

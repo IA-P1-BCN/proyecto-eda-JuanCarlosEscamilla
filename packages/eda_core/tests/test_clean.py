@@ -70,3 +70,26 @@ def test_durada_none_sin_resolucion_ni_convocatoria():
     assert durada_mesos(date(2023, 1, 27), []) is None
     assert durada_mesos(date(2023, 1, 27), [{"hito_fecha": "2023-03-14",
                                              "hito_titulo": "Bases"}]) is None
+
+
+# ── T4: dedup de hitos (96 duplicados reales por (proceso, fecha, título)) ──
+from eda_core.clean import dedup_hitos  # noqa: E402
+from fixtures_sucias import FILAS_SUCIAS  # noqa: E402
+
+
+def test_dedup_hitos_por_proceso_fecha_titulo():
+    filas = [f for f in FILAS_SUCIAS if f["proceso_id"] == "20230127O46"]
+    # R5 duplica la fila base: misma (proceso_id, hito_fecha, hito_titulo)
+    limpias = dedup_hitos(filas)
+    claves = [(f["proceso_id"], f["hito_fecha"], f["hito_titulo"]) for f in limpias]
+    assert len(claves) == len(set(claves))
+    assert len(limpias) == 2  # base + resolución (R6), sin el duplicado R5
+
+
+def test_dedup_conserva_la_primera_aparicion():
+    primera = dedup_hitos([{"proceso_id": "X", "hito_fecha": "2024-01-01",
+                            "hito_titulo": "T", "hito_url": "https://x/1"},
+                           {"proceso_id": "X", "hito_fecha": "2024-01-01",
+                            "hito_titulo": "T", "hito_url": "https://x/2"}])
+    assert len(primera) == 1
+    assert primera[0]["hito_url"] == "https://x/1"
