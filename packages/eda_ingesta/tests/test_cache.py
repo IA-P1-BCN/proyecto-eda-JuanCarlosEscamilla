@@ -43,12 +43,25 @@ def test_fichero_creado_en_la_raiz_indicada(tmp_path):
     assert list(tmp_path.glob("*.html"))  # el HTML vive en la raíz pedida
 
 
-def test_4xx_no_se_cachea_puede_recuperarse(tmp_path):
-    d, t = descarga(tmp_path, [(404, b""), (200, b"aparecio")])
-    assert d.get("http://x/ghost").status == 404
-    r = d.get("http://x/ghost")
-    assert r.status == 200 and r.contenido == b"aparecio"
-    assert len(t.llamadas) == 2  # el 404 no envenena la caché
+def test_4xx_cache_negativa_mismo_dia_y_recuperacion_al_siguiente(tmp_path):
+    from datetime import date, timedelta
+
+    t = TransporteFalso([(404, b""), (200, b"aparecio")])
+    from eda_ingesta.cache import CacheHtml
+    from eda_ingesta.client import ClienteHttp
+
+    cliente = ClienteHttp(fetch=t, dormir=lambda s: None, ahora=lambda: 0.0)
+    d = DescargaCacheada(cliente, CacheHtml(tmp_path))
+
+    r1 = d.get("http://x/ghost")
+    assert r1.status == 404 and r1.hit is False  # 1ª vez: red
+    r2 = d.get("http://x/ghost")
+    assert r2.status == 404 and r2.hit is True   # mismo día: caché negativa, sin red
+    assert len(t.llamadas) == 1
+
+    d.hoy = lambda: date.today() + timedelta(days=1)  # día siguiente: se reintenta
+    r3 = d.get("http://x/ghost")
+    assert r3.status == 200 and r3.contenido == b"aparecio"
 
 
 def test_5xx_agotado_no_se_cachea(tmp_path):

@@ -36,7 +36,7 @@ COLUMNAS_RAW = [
 ]
 
 
-def _fila(proceso: Proceso, hito) -> dict[str, str]:
+def fila_proceso_hito(proceso: Proceso, hito) -> dict[str, str]:
     fecha = (
         hito.fecha.isoformat() if hito and hito.fecha else ""
     )
@@ -71,9 +71,9 @@ def escribir_csv_raw(procesos: list[Proceso], ruta: Path) -> Path:
         for proceso in procesos:
             if proceso.hitos:
                 for hito in proceso.hitos:
-                    w.writerow(_fila(proceso, hito))
+                    w.writerow(fila_proceso_hito(proceso, hito))
             else:
-                w.writerow(_fila(proceso, None))
+                w.writerow(fila_proceso_hito(proceso, None))
     return ruta
 
 
