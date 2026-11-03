@@ -31,20 +31,20 @@ class CIDOFalso:
     def __call__(self, url, headers):
         self.llamadas += 1
         if "rss/oposicions" in url:
-            return 200, self._feed.encode()
+            return 200, self._feed.encode(), {}
         if "page=" in url:
-            return 200, P2.encode()
+            return 200, P2.encode(), {}
         if "oposicions?" in url:
-            return 200, P1.encode()
+            return 200, P1.encode(), {}
         if "14783298" in url:
-            return 200, FICHA_IT.encode()
+            return 200, FICHA_IT.encode(), {}
         if "21078364" in url:
-            return 200, FICHA_AL.encode()
+            return 200, FICHA_AL.encode(), {}
         if "90000001" in url:
-            return 200, FICHA_SINTETICA_IT.encode()
+            return 200, FICHA_SINTETICA_IT.encode(), {}
         if "90000002" in url:
-            return 200, FICHA_SINTETICA_NO_IT.encode()
-        return 404, b"no existe"
+            return 200, FICHA_SINTETICA_NO_IT.encode(), {}
+        return 404, b"no existe", {}
 
 
 def test_run_bootstrap_completo(tmp_path):

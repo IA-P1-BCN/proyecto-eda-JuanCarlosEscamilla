@@ -9,6 +9,7 @@ complemento diario; este crawler es también el "full re-scan" manual.
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -59,13 +60,22 @@ def total_resultados(html: str) -> int | None:
 
 
 def crawl_listado(
-    descarga: DescargaCacheada, materia: int = 24, max_paginas: int | None = None
+    descarga: DescargaCacheada,
+    materia: int = 24,
+    max_paginas: int | None = None,
+    progreso: Callable[[dict], None] | None = None,
 ) -> list[str]:
     """Recorre el listado y devuelve todas las URLs de ficha (únicas, ordenadas).
 
     Para por: no hay página siguiente, una página sin fichas nuevas o
     max_paginas alcanzado. Cada página pasa por la caché — re-ejecutar no
-    re-pide lo descargado.
+    re-pide lo descargado. `progreso` recibe un dict por página
+    (fase=listado, url, fichas) para UI/registrar.
+
+    Regresión real (2026-11-03): el 'next' de las páginas 2+ del portal PIERDE
+    el filtreMateria → el crawler caminaba el listado completo (1.536 procesos
+    en vez de 237). Si la URL de paginación pierde el filtro, se reconstruye
+    con url_listado(materia, page=N).
     """
     fichas: set[str] = set()
     paginas = 0
@@ -80,5 +90,13 @@ def crawl_listado(
             break
         fichas |= set(nuevas)
         paginas += 1
+        if progreso:
+            progreso({"fase": "listado", "url": url, "pagina": paginas, "fichas": len(nuevas)})
         url = extraer_siguiente(html)
+        if url and "filtreMateria" not in url:
+            m = re.search(r"page=(\d+)", url)
+            if progreso:
+                progreso({"fase": "aviso", "detalle": "paginación perdió el filtro; reconstruida",
+                          "url": url})
+            url = url_listado(materia, int(m.group(1))) if m else None
     return sorted(fichas)

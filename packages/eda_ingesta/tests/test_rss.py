@@ -16,7 +16,7 @@ class TransporteFalso:
 
     def __call__(self, url, headers):
         self.llamadas += 1
-        return 200, self._cuerpo.encode()
+        return 200, self._cuerpo.encode(), {}
 
 
 def descarga(tmp_path, transporte):

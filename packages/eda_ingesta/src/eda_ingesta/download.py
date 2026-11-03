@@ -64,17 +64,31 @@ def _guardar_estado(raiz: Path, ids: set[str]) -> None:
     (raiz / "ids_conocidos.txt").write_text("\n".join(sorted(ids)) + "\n")
 
 
-def _descarga(raiz: Path, fetch=None, dormir=None, ahora=None) -> DescargaCacheada:
-    return DescargaCacheada(_cliente(fetch, dormir, ahora), CacheHtml(raiz / "html"))
+def _descarga(raiz: Path, fetch=None, dormir=None, ahora=None, pausa: float = 1.0) -> DescargaCacheada:
+    cliente = _cliente(fetch, dormir, ahora)
+    cliente.pausa = pausa
+    return DescargaCacheada(cliente, CacheHtml(raiz / "html"))
 
 
-def _procesar_ficha(descarga: DescargaCacheada, url: str, resumen: Resumen, eventos: list[dict]):
-    """Descarga y parsea una ficha; devuelve el Proceso o None (con evento en el log)."""
+def _procesar_ficha(
+    descarga: DescargaCacheada, url: str, resumen: Resumen, eventos: list[dict],
+    progreso=None, i: int = 0, n: int = 0, pausa: float = 0.0,
+):
+    """Descarga y parsea una ficha; devuelve el Proceso o None (con evento en el log).
+
+    Emite un evento de progreso DESPUÉS de la descarga (con hit/status reales).
+    """
     try:
         r = descarga.get(url)
     except ClienteAgotado:
+        if progreso:
+            progreso({"fase": "ficha", "i": i, "n": n, "url": url, "hit": False,
+                      "status": "agotado", "pausa": pausa})
         eventos.append({"tipo": "E1", "url": url, "detalle": "agotado tras reintentos"})
         return None
+    if progreso:
+        progreso({"fase": "ficha", "i": i, "n": n, "url": url, "hit": r.hit,
+                  "status": r.status, "pausa": pausa})
     if r.status >= 400:  # E1 (404/5xx) — logueado la 1ª vez; en hits de caché negativa se calla
         if not r.hit:
             eventos.append({"tipo": "E1", "url": url, "detalle": f"status {r.status}"})
@@ -95,25 +109,34 @@ def _procesar_ficha(descarga: DescargaCacheada, url: str, resumen: Resumen, even
 
 
 def run(
-    raiz: Path, *, materia: int = 24, max_paginas: int | None = None,
+    raiz: Path, *, materia: int = 24, max_paginas: int | None = None, pausa: float = 1.0,
+    progreso=None,
     fetch=None, dormir=None, ahora=None,
 ) -> Resumen:
-    """Bootstrap completo: crawler + RSS + fichas → CSV crudo + log de calidad."""
+    """Bootstrap completo: crawler + RSS + fichas → CSV crudo + log de calidad.
+
+    `progreso` (opcional) recibe un dict por página del listado y por ficha
+    (fase, url, hit, status, i/n, pausa) — el CLI lo imprime en stderr.
+    """
     raiz = Path(raiz)
     eventos: list[dict] = []
-    descarga = _descarga(raiz, fetch, dormir, ahora)
+    cliente = _cliente(fetch, dormir, ahora)
+    cliente.pausa = pausa
+    descarga = DescargaCacheada(cliente, CacheHtml(raiz / "html"))
     ruta_csv = raiz / "oposicions.csv"
     conocidos = _ids_conocidos(ruta_csv, raiz)
 
-    urls_fichas = crawl_listado(descarga, materia, max_paginas)
+    urls_fichas = crawl_listado(descarga, materia, max_paginas, progreso=progreso)
     nuevos_rss = scan_rss(descarga, conocidos)
     urls = set(urls_fichas) | {u for _, u in nuevos_rss}
     _guardar_estado(raiz, conocidos | {i for i, _ in nuevos_rss})
 
     resumen = Resumen(fichas_descubiertas=len(urls))
     procesos = []
-    for url in sorted(urls):
-        proceso = _procesar_ficha(descarga, url, resumen, eventos)
+    total = len(urls)
+    for i, url in enumerate(sorted(urls), 1):
+        proceso = _procesar_ficha(descarga, url, resumen, eventos,
+                                  progreso=progreso, i=i, n=total, pausa=pausa)
         if proceso is not None:
             procesos.append(proceso)
             resumen.hitos += len(proceso.hitos)
@@ -128,14 +151,18 @@ def run(
     return resumen
 
 
-def run_scan(raiz: Path, *, fetch=None, dormir=None, ahora=None) -> Resumen:
+def run_scan(raiz: Path, *, pausa: float = 1.0, progreso=None, fetch=None, dormir=None, ahora=None) -> Resumen:
     """Refresco incremental: 1 petición al feed → añade SOLO fichas IT nuevas."""
     raiz = Path(raiz)
     eventos: list[dict] = []
-    descarga = _descarga(raiz, fetch, dormir, ahora)
+    descarga = _descarga(raiz, fetch, dormir, ahora, pausa)
     ruta_csv = raiz / "oposicions.csv"
     conocidos = _ids_conocidos(ruta_csv, raiz)
     nuevos = scan_rss(descarga, conocidos)
+    total = len(nuevos)
+    for i, (_id, url) in enumerate(nuevos, 1):
+        if progreso:
+            progreso({"fase": "ficha", "i": i, "n": total, "url": url, "pausa": pausa})
     _guardar_estado(raiz, conocidos | {i for i, _ in nuevos})
 
     resumen = Resumen(fichas_descubiertas=len(nuevos))

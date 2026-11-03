@@ -20,7 +20,7 @@ class TransporteFalso:
         item = self.cola.pop(0)
         if isinstance(item, Exception):
             raise item
-        return item
+        return item if len(item) == 3 else (*item, {})  # (status, body, cabeceras)
 
     def dormir(self, segundos):
         self.suenos.append(segundos)
@@ -87,3 +87,23 @@ def test_timeout_es_transitorio():
     r = c.get("http://x/")
     assert r.status == 200
     assert len(t.llamadas) == 3
+
+
+def test_429_honra_retry_after_del_servidor():
+    """Rate-limiting real: el servidor manda esperar; el cliente obedece."""
+    t = TransporteFalso([(429, b"lento"), (200, b"ok")])
+    t.retry_after = [2.5]
+    c = cliente(t, pausa=0, reintentos=3, backoff=0.5)
+    r = c.get("http://x/")
+    assert r.status == 200
+    assert t.suenos == pytest.approx([2.5])  # Retry-After, no el backoff por defecto
+
+
+def test_429_honra_retry_after_del_servidor():
+    """Rate-limiting real: el servidor manda esperar; el cliente obedece."""
+    t = TransporteFalso([(429, b"lento", {"Retry-After": "2.5"}), (200, b"ok", {})])
+    c = cliente(t, pausa=0, reintentos=3, backoff=0.5)
+    r = c.get("http://x/")
+    assert r.status == 200
+    assert t.suenos == pytest.approx([2.5])  # Retry-After, no el backoff por defecto
+    assert len(t.llamadas) == 2

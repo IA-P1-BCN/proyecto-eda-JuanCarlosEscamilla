@@ -14,9 +14,10 @@ from typing import NamedTuple
 
 USER_AGENT = "eda-oposicions/0.1 (EDA bootcamp Factoria F5; +https://github.com/IA-P1-BCN/proyecto-eda-JuanCarlosEscamilla)"
 
-# Transporte: url + headers → (status, contenido). Los fallos transitorios se
-# señalan lanzando excepción (timeout/red/5xx); el cliente decide los reintentos.
-Fetch = Callable[[str, dict[str, str]], tuple[int, bytes]]
+# Transporte: url + headers → (status, contenido, cabeceras). Los fallos
+# transitorios (red/timeout) se lanzan; los 4xx/5xx vuelven como status para
+# que el cliente aplique su política (429 honra Retry-After, 5xx backoff).
+Fetch = Callable[[str, dict[str, str]], tuple[int, bytes, dict[str, str]]]
 
 
 class Respuesta(NamedTuple):
@@ -71,10 +72,14 @@ class ClienteHttp:
             self._esperar_pausa()
             self._ultima = self._ahora()  # la pausa mide entre inicios de petición
             try:
-                status, contenido = self._fetch(url, dict(self._headers))
+                status, contenido, cabeceras = self._fetch(url, dict(self._headers))
             except self._TRANSITORIOS:
                 if intento < self.reintentos - 1:
                     self._dormir(self.backoff * 2**intento)
+                continue
+            if status == 429:  # rate-limiting del servidor: manda él
+                if intento < self.reintentos - 1:
+                    self._dormir(_retry_after(cabeceras, self.backoff * 2**intento))
                 continue
             if status >= 500:
                 if intento < self.reintentos - 1:
@@ -91,13 +96,22 @@ class ClienteHttp:
             self._dormir(restante)
 
 
-def _fetch_por_defecto(url: str, headers: dict[str, str]) -> tuple[int, bytes]:
-    """Fetch real con urllib. Devuelve el status tal cual (incluidos 5xx) —
-    la política de reintentos vive en el cliente, no en el transporte. Los
-    fallos de red/timeout sí se lanzan como excepciones (transitorios)."""
+def _retry_after(cabeceras: dict[str, str], por_defecto: float) -> float:
+    """Retry-After en segundos (numérico); si viene como fecha u otra cosa, fallback."""
+    valor = cabeceras.get("Retry-After") or cabeceras.get("retry-after")
+    try:
+        return max(0.0, float(valor))
+    except (TypeError, ValueError):
+        return por_defecto
+
+
+def _fetch_por_defecto(url: str, headers: dict[str, str]) -> tuple[int, bytes, dict[str, str]]:
+    """Fetch real con urllib. Devuelve status/cabeceras tal cual — la política
+    de reintentos vive en el cliente, no en el transporte. Los fallos de
+    red/timeout sí se lanzan como excepciones (transitorios)."""
     req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, r.read()
+            return r.status, r.read(), dict(r.headers)
     except urllib.error.HTTPError as e:
-        return e.code, e.read()
+        return e.code, e.read(), dict(e.headers or {})
