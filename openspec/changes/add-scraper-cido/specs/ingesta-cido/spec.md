@@ -52,3 +52,17 @@ Cada adjunto SHALL registrarse con su slug semántico y un estado: `E1` (caído:
 
 - **WHEN** un enlace apunta al portal del ayuntamiento en vez del documento concreto
 - **THEN** se registra E2 y se sugiere la acción "pedir enlace directo"
+
+### Requirement: Detección incremental por RSS
+
+El scraper SHALL usar el feed `cido.diba.cat/rss/oposicions/oposicions` como canal de novedades: 1 petición diaria, diff de identificadores contra la caché, y descarga de SOLO las fichas nuevas (filtrando materia en la ficha, no en el feed). El feed no cubre el histórico completo (1.000 items ≈ 2 meses): el crawler de listados SHALL conservarse para el bootstrap y el full re-scan manual.
+
+#### Scenario: día sin novedades
+
+- **WHEN** el scan RSS no devuelve identificadores nuevos
+- **THEN** se emiten 0 peticiones de fichas y el CSV no cambia
+
+#### Scenario: proceso nuevo publicado hoy
+
+- **WHEN** el feed incluye un proceso cuyo id no está en caché
+- **THEN** se descarga su ficha, se comprueba su materia y solo si es Informàtica (24) se añade al dataset

@@ -12,6 +12,8 @@
 - [ ] 2.2 Caché HTML en `data/raw/html/` (clave = URL) y consulta antes de red
 - [ ] 2.3 Crawler de listados (~5 páginas, materia 24) → cola de fichas
 
+- [ ] 2.4 Scan RSS incremental: 1 petición → diff ids → fetch solo nuevos → filtro materia en ficha
+
 ## 3. Parseo de fichas y formato largo
 
 - [ ] 3.1 Parser de ficha → proceso (dimensión) + hitos (formato largo)
