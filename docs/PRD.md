@@ -244,8 +244,9 @@ issue → branch feat/us3-scraper-cido → tests (rojo) → código (verde)
 
 - 🎓 **Clase**: nada — un notebook corrido a mano y listo.
 - 🏭 **Empresa**: Airflow en un servicio gestionado (Astronomer, MWAA, Composer), DAGs programados, alertas, UI de monitoreo.
-- 🧪 **Ejercicio production-way**: **Airflow real corriendo en Docker** (astro-cli, ver Apéndice B). El DAG `eda_oposicions` ejecuta NUESTROS módulos de `src/eda/` (scan/download → profile → clean → enrich → validate → export) con `data/` montado por volumen — **ingesta incremental sobre una fuente viva**: el scan detecta procesos nuevos o con nuevos hitos BOP y solo descarga lo que falta (idempotencia de verdad, no re-scrapear 1.000 fichas). **One click** = botón ▶ en la UI de Airflow (localhost:8080): el graph view pinta cada tarea en verde mientras TODO el proceso corre — escanear, limpiar, validar y exportar. Eso es el reflejo de prod.
+- 🧪 **Ejercicio production-way**: **Airflow real con docker-compose propio** (ver Apéndice B — infra explícita, no CLI mágica): `webserver + scheduler + postgres` con volúmenes a `./packages` y `./data`. El DAG `eda_oposicions` ejecuta NUESTROS módulos de los paquetes (scan/download → profile → clean → enrich → validate → export) — **ingesta incremental sobre una fuente viva**: el scan detecta procesos nuevos o con nuevos hitos BOP y solo descarga lo que falta (idempotencia de verdad). **One click** = botón ▶ en la UI de Airflow (localhost:8080): el graph view pinta cada tarea en verde mientras TODO el proceso corre — escanear, limpiar, validar y exportar. Eso es el reflejo de prod. *(Sin Spark por diseño — umbral documentado en ADR-0003.)*
 - **Conceptos que pasan de teoría a práctica**: idempotencia (re-ejecutar no duplica), dependencias entre tareas, logs por tarea, reintentos, catchup.
+- **DoD**: `docker compose -f infra/docker-compose.yml up -d` → DAG end-to-end en verde en la UI (localhost:8080) → artefactos regenerados (`data/processed/` + reporte) → README documenta `task airflow-up` y los comandos.
 - **AC**: issue #11 — pasos de verificación (fuente de verdad del DoD)
 
 ### US12 — Informe de calidad + presentación 🔴
@@ -272,17 +273,12 @@ CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0
 
 Render puede desplegar con este Dockerfile (`render.yaml`, servicio web free, `dockerfilePath: ./Dockerfile`, `autoDeploy: true` desde `main`).
 
-## Apéndice B — Airflow REAL en Docker (astro-cli)
+## Apéndice B — Airflow REAL con docker-compose propio
 
-Setup una vez (~30 min la primera vez, luego segundos):
+Infra explícita en el repo: **`infra/docker-compose.yml`** (ya creado y validado con `docker compose config`; los contenedores se levantan en US11 cuando el DAG exista). Postgres como metadata DB, `LocalExecutor`, volúmenes a `./packages`, `./data` y `./airflow/dags` — el monorepo es importable dentro de los contenedores vía `PYTHONPATH`. Tareas del Taskfile: `task airflow-up` / `task airflow-down`; UI en localhost:8080 (admin/admin, usuario creado por el servicio `airflow-init`).
 
-```bash
-brew install astro-cli          # CLI de Astronomer: Airflow dockerizado listo
-astro dev init                  # crea airflow/ (dags/, .env, docker-compose base)
-# montar nuestro código y datos: añadir volumes en el docker-compose override
-#   ./src:/project/src  y  ./data:/project/data
-astro dev start                 # levanta webserver + scheduler + postgres (Docker)
-```
+*PREREQUISITES.md: macOS → colima con `--cpu 4 --memory 8` (el default de 2 GB se queda corto para Airflow).*
+*Motor de datos: pandas — sin Spark por diseño (ADR-0003: ~2.000 filas; trigger de revisión >10⁶).*
 
 El DAG (`airflow/dags/eda_oposicions.py`) llama a los **mismos módulos** que `python -m eda.pipeline` — no hay lógica duplicada, solo orquestación encima:
 
@@ -323,7 +319,7 @@ Docker es **el mismo software**, sin coste.
 | Airflow gestionado (Astronomer, MWAA, Composer) | Orquestación en la nube, alertas, SLAs | Corremos Airflow local con Docker (US11) — mismo software |
 | Monitoreo (Datadog…) | Alertas de caída del pipeline | Render notifica fallos de deploy |
 
-## Calendario (~33 h, entrega ~dom 9 nov)
+## Calendario (~34 h, entrega ~dom 9 nov)
 
 | Día | Historias | Horas |
 |---|---|---|
@@ -333,9 +329,9 @@ Docker es **el mismo software**, sin coste.
 | Jue 6 | US6 (EDA completo en notebook) | 5 |
 | Vie 7 | US7 + US8 (gráficos + informe PDF) | 5 |
 | Sáb 8 | US9 + US10 (dashboard + Render) | 5 |
-| Dom 9 | US11 (Airflow one-click) + US12 + pulido | 4 + buffer |
+| Dom 9 | US11 (Airflow one-click) + US12 + pulido | 5 + buffer |
 
-*El presupuesto se mantiene ~33 h: el filtro materia 24 aligera el crawl (237 fichas en vez de ~1.000, −2 h) y compensa el stretch de PDFs de aspirantes (+2 h). Sobre las 30 h originales, el sobrecoste restante es Airflow real (+2-3 h).*
+*El presupuesto se mantiene en ~34 h: el filtro materia 24 aligera el crawl (237 fichas en vez de ~1.000, −2 h) y compensa el stretch de PDFs de aspirantes (+2 h). Sobre las 30 h originales, el sobrecoste es Airflow real con docker-compose propio (+3-4 h). El domingo absorbe el ajuste.*
 
 **Regla de corte si falta tiempo** (en este orden): 1º cae la orquestación Airflow
 (queda `python -m eda.pipeline`: un solo comando, mismo proceso, sin UI); 2º cae el
