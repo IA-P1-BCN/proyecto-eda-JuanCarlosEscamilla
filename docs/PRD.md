@@ -20,7 +20,7 @@ Convertir el registro público de procesos selectivos locales (**CIDO DIBA**, `c
 | Airflow local (Docker) + dashboard en Render | |
 
 ## 3. Riesgos principales
-1. **Scraper fragilidad** (HTML sin API): mitigación = caché resumible + tests del parser + plan B "solo resueltos".
+1. **Scraper fragilidad** (HTML sin API): mitigación = caché resumible + tests del parser + plan B "solo resueltos" + plan C: browser automation (agent-browser) si el portal añadiera JS/anti-bot — documentado, no implementado.
 2. **M4 concentra 5 US en 2,5 días**: mitigación = regla de corte definida (§ Calendario).
 3. **Presupuesto ~33 h ajustado**: lo absorbe el buffer del domingo; nunca a costa de tests/informe.
 4. **Enlaces muertos frecuentes** (reportado por el usuario; los adjuntos viven en `diba.cat/documents` y DOGC, no en CIDO) + **PDFs heterogéneos**: mitigación = reintentos con backoff, **taxonomía de errores E1/E2/E3** (caído / intranet genérica / no parseable) → informe de calidad con acción sugerida, y `n_aspirantes` solo donde el PDF exista y parsee (nulo documentado en el resto).
