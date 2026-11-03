@@ -13,8 +13,7 @@ Los datos se descargan con un scraper propio (no hay API pública) y se cachean 
 
 ## Cómo ejecutarlo
 
-Requiere [`task` (go-task)](https://taskfile.dev) y [`uv`](https://docs.astral.sh/uv/):
-`brew install go-task uv`
+Requisitos previos: **[`PREREQUISITES.md`](PREREQUISITES.md)** (`uv` + `go-task` el día 1; Quarto/Docker/astro llegan con su fase).
 
 ```bash
 task sync        # instala el monorepo completo (un venv, un lockfile)
