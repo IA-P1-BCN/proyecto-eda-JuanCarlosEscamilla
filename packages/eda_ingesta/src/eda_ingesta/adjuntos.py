@@ -35,9 +35,9 @@ def clasificar_doc(url: str) -> str | None:
     u = unquote(url).lower()
     if any(d in u for d in _DOGC):
         return "dogc"
-    for token in _TOKENS:
-        if token in u:
-            return token
+    encontrados = [t for t in _TOKENS if t in u]
+    if encontrados:
+        return max(encontrados, key=len)  # el token más específico (evita subcadenas)
     m = _RE_TALENT.search(u)
     return m.group(1) if m else None
 
