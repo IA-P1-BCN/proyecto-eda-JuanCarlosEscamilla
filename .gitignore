@@ -1,19 +1,36 @@
-# datos (crudo y procesado — reproducibles con el pipeline)
+# ── datos (reproducibles con: task pipeline) ──
 data/
-# html cacheado del scraper
 *.html.gz
 
-# python
-.venv/
+# ── estado local de herramientas/agentes — nunca en el repo ──
+.zcode/
+.claude/
+.idea/
+.vscode/
+.cursor/
+
+# ── python ──
 __pycache__/
 *.pyc
 .pytest_cache/
+.venv/
 *.egg-info/
 dist/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# notebooks
+# ── notebooks ──
 .ipynb_checkpoints/
 
-# entornos y sistema
+# ── quarto (llegará con US8) ──
+/.quarto/
+*.quarto_ipynb
+
+# ── sistema / entorno ──
 .DS_Store
+Thumbs.db
 .env
+.env.*
+!.env.example
