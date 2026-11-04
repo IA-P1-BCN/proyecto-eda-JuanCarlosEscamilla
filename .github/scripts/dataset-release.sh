@@ -4,20 +4,21 @@
 # Requiere: gh autenticado (local: tu token; Actions: GITHUB_TOKEN).
 set -euo pipefail
 
-# Nivel: raw (bronze) | processed (silver) — task dataset-release DATA=processed
+# Nivel: raw (bronze) | processed (silver) | v1.0 (gold final) — task dataset-release DATA=v1.0
 NIVEL="${1:-raw}"
 case "$NIVEL" in
-  raw)       CSV="data/raw/oposicions.csv"; PROFILING="reports/profiling.md" ;;
-  processed) CSV="data/processed/oposicions_procesado.csv"; PROFILING="reports/profiling-processed.md" ;;
-  *) echo "nivel desconocido: $NIVEL (raw|processed)" >&2; exit 1 ;;
+  raw)       CSV="data/raw/oposicions.csv"; PROFILING="reports/profiling.md"; TAG_FIJO="" ;;
+  processed) CSV="data/processed/oposicions_procesado.csv"; PROFILING="reports/profiling-processed.md"; TAG_FIJO="" ;;
+  v1.0|gold) CSV="data/processed/oposicions_enriquit.csv"; PROFILING="docs/informe-calidad-datos.md"; TAG_FIJO="dataset-v1.0" ;;
+  *) echo "nivel desconocido: $NIVEL (raw|processed|v1.0)" >&2; exit 1 ;;
 esac
 REPO="${GITHUB_REPOSITORY:-IA-P1-BCN/proyecto-eda-JuanCarlosEscamilla}"
 
-[ -f "$CSV" ] || { echo "no existe $CSV — ejecuta antes: task download / task clean" >&2; exit 1; }
+[ -f "$CSV" ] || { echo "no existe $CSV — ejecuta antes: task download / task pipeline" >&2; exit 1; }
 
-# Tag content-addressed: mismo contenido = mismo tag = release duplicado imposible
+# Tag content-addressed (salvo tag semántico explícito dataset-v1.0)
 HASH=$(sha256sum "$CSV" | cut -c1-12)
-TAG="dataset-$NIVEL-$HASH"
+TAG="${TAG_FIJO:-dataset-$NIVEL-$HASH}"
 FILAS=$(( $(wc -l < "$CSV") - 1 ))
 
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
