@@ -12,12 +12,14 @@ from pathlib import Path
 
 from eda_core import build
 from eda_core.enrich import enriquir_dataset
+from eda_core.graficos import generar_estaticos, generar_interactivos
 from eda_ingesta import download, profile
 from eda_ingesta.crawl import Filtre
 
-STEPS = ("download", "scan", "profile", "clean", "enrich", "validate", "export")
+STEPS = ("download", "profile", "clean", "enrich", "charts", "validate", "export")
 
-PENDIENTES = ("validate", "export")
+PENDIENTES = ("validate", "export")  # charts no entra en "all": genera ficheros
+
 
 
 def _progreso(e: dict) -> None:
@@ -81,6 +83,10 @@ def main(argv: list[str] | None = None) -> int:
                                              Path("data/processed/oposicions_enriquit.csv"),
                                              informe_sin_match=Path("reports/calidad-municipios.csv"))
             print(f"[enrich] {resumen}")
+        elif paso == "charts":
+            staticos = generar_estaticos(Path("data/processed/oposicions_enriquit.csv"))
+            inter = generar_interactivos(Path("data/processed/oposicions_enriquit.csv"))
+            print(f"[charts] {len(staticos)} estáticos + {len(inter)} interactivos en reports/charts/")
         elif paso == "profile":
             destino = profile.run(raiz)
             print(f"[profile] reporte en {destino}")

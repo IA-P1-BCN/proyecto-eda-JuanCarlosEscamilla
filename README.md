@@ -46,5 +46,5 @@ notebooks/          # (US6) análisis narrativo — importa de eda_core, no cont
 - [x] US2 — Entorno monorepo uv con workspaces ([ADR-0002](docs/adr/0002-monorepo-uv-workspaces.md)), CI, OpenSpec
 - [x] US3 — Scraper CIDO (bootstrap + scan RSS) + profiling · `task download` / `task scan-rss`
 - [ ] US4-US5 — Limpieza TDD + normalización per cápita
-- [x] US6 — Notebook EDA (3 preguntas, rúbrica completa) · US7-US8 pendientes
+- [x] US6 — Notebook EDA · [x] US7 — Gráficos informe+dashboard (task charts) · US8 pendiente
 - [ ] US9-US12 — Dashboard, Render, Airflow, calidad + presentación

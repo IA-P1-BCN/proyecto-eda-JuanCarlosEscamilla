@@ -4,7 +4,7 @@ from eda_pipeline.cli import STEPS, main
 
 
 def test_pasos_definidos():
-    assert set(STEPS) == {"download", "scan", "profile", "clean", "enrich", "validate", "export"}
+    assert set(STEPS) == {"download", "profile", "clean", "enrich", "charts", "validate", "export"}
 
 
 def test_run_all_sin_error(capsys):
