@@ -62,3 +62,9 @@ tasks:
     cmds:
       - mkdir -p docs/informe/charts && cp reports/charts/*.png docs/informe/charts/
       - quarto render docs/informe/informe.qmd
+
+  slides:
+    desc: Renderiza la presentación ejecutiva de 5 min (Quarto revealjs) — US12
+    cmds:
+      - mkdir -p docs/presentacion/charts && cp reports/charts/*.png docs/presentacion/charts/
+      - quarto render docs/presentacion/slides.qmd

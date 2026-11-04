@@ -24,3 +24,17 @@ def test_informe_calidad_datos_cumple_ac():
 
     # Responde explícitamente a "¿qué NO sabemos aún?"
     assert "¿Qué NO sabemos aún?" in texto or "¿qué NO sabemos aún?" in texto
+
+
+def test_slides_revealjs_y_taskfile():
+    """AC 4-5 de US12 (#62): Taskfile define `slides` y docs/presentacion/slides.qmd genera revealjs."""
+    taskfile = (RAIZ / "Taskfile.yml").read_text(encoding="utf-8")
+    assert "slides:" in taskfile
+    assert "quarto render docs/presentacion/slides.qmd" in taskfile
+
+    qmd = RAIZ / "docs" / "presentacion" / "slides.qmd"
+    assert qmd.exists(), f"Falta {qmd}"
+    contenido = qmd.read_text(encoding="utf-8")
+    assert "revealjs" in contenido
+    assert (RAIZ / "docs" / "presentacion" / "slides.html").exists()
+
