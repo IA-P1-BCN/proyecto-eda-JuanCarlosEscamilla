@@ -61,4 +61,17 @@ def test_cierre_readme_y_prd_checklists():
     assert "- [ ]" not in prd
 
 
+def test_colab_badge_y_bootstrap_notebook():
+    """README incluye el badge de Colab y el notebook incluye el auto-bootstrap para google.colab."""
+    readme = (RAIZ / "README.md").read_text(encoding="utf-8")
+    assert "https://colab.research.google.com/assets/colab-badge.svg" in readme
+    assert "colab.research.google.com/github/IA-P1-BCN/proyecto-eda-JuanCarlosEscamilla/blob/main/notebooks/eda.ipynb" in readme
+
+    nb = (RAIZ / "notebooks" / "eda.ipynb").read_text(encoding="utf-8")
+    assert "google.colab" in nb
+    assert "/content/repo/packages/eda_core/src" in nb
+    assert "releases/download/dataset-v1.0/oposicions_enriquit.csv" in nb
+
+
+
 
