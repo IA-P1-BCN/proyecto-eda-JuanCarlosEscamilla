@@ -7,6 +7,8 @@ def test_pasos_definidos():
     assert set(STEPS) == {"download", "profile", "clean", "enrich", "charts", "validate", "export"}
 
 
-def test_run_all_sin_error(capsys):
+def test_run_all_sin_error(capsys, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     assert main(["--step", "all"]) == 0
-    assert "pendiente de implementar" in capsys.readouterr().out
+    salida = capsys.readouterr().out
+    assert "[validate]" in salida and "[export]" in salida

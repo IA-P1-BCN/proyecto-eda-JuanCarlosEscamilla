@@ -6,7 +6,7 @@ El CSV procesado (1 fila por hito, proceso desnormalizado) se enriquece por
 - `places_per_mil_hab` = plazas del proceso / (población/1000) — la comparación
   honesta entre municipios grandes y pequeños (pregunta 2 del PRD)
 - `urbanitzacio`: urbano ≥20k · intermedi 5k-20k · rural <5k hab (criterio
-  documentado en ADR-0006/GLOSSARY; alternativas habituales del INE)
+  documentado en ADR-0005/GLOSSARY; alternativas habituales del INE)
 - Los procesos sin match (no-ajuntament o municipio ausente) NO se descartan:
   siguen en el dataset con los campos vacíos, y quedan listados en el informe
   de municipios sin match (no silencio).

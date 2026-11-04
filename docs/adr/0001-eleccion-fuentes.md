@@ -5,7 +5,7 @@ date: 2026-11-03
 
 # Elección de fuentes: CIDO DIBA (materia Informàtica) + población municipal
 
-Necesitábamos un dataset real, sucio y con suficiente material para un EDA completo (≥1.000 filas, ≥8 columnas, tipos mixtos), y que además soportara un pipeline con orquestación diaria creíble. Decidimos: **fuente principal = procesos selectivos del CIDO (Diputació de Barcelona)** filtrados por la materia *Informàtica. Noves tecnologies* (237 procesos a 03/11/2026), enriquecida con **población por municipio (INE/DIBA)** para normalizar plazas per cápita.
+Necesitábamos un dataset real, sucio y con suficiente material para un EDA completo (≥1.000 filas, ≥8 columnas, tipos mixtos), y que además soportara un pipeline con orquestación diaria creíble. Decidimos: **fuente principal = procesos selectivos del CIDO (Diputació de Barcelona)** filtrados por la materia *Informàtica. Noves tecnologies* y proximidad (radio de 45 km desde Vic: 814 procesos y 2.786 hitos a 04/11/2026), enriquecida con **población por municipio (Wikidata SPARQL, `data/reference/poblacio_municipis.csv`)** para normalizar plazas per cápita.
 
 ## Considered Options
 

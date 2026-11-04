@@ -10,7 +10,8 @@ from pathlib import Path
 
 import matplotlib
 
-matplotlib.use("Agg")
+if "inline" not in matplotlib.get_backend().lower():
+    matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 PALETA = ["#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#7c3aed", "#0d9488"]

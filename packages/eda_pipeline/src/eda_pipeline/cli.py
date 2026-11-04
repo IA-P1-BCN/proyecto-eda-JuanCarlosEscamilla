@@ -18,7 +18,7 @@ from eda_ingesta.crawl import Filtre
 
 STEPS = ("download", "profile", "clean", "enrich", "charts", "validate", "export")
 
-PENDIENTES = ("validate", "export")  # charts no entra en "all": genera ficheros
+PASOS_ALL = ("clean", "enrich", "validate", "export")  # all: sin red (download/scan son explícitos)
 
 
 
@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="eda-pipeline", description=__doc__)
     parser.add_argument(
         "--step",
-        choices=(*STEPS, "all"),
+        choices=(*STEPS, "scan", "all"),
         default="all",
         help="paso a ejecutar (por defecto: all)",
     )
@@ -58,8 +58,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     # "all" ejecuta SOLO los pasos sin efectos de red; download/scan son explícitos
-    pasos = PENDIENTES if args.step == "all" else (args.step,)
+    pasos = PASOS_ALL if args.step == "all" else (args.step,)
     raiz = Path("data/raw")
+    ruta_raw = raiz / "oposicions.csv"
+    ruta_proc = Path("data/processed/oposicions_procesado.csv")
+    ruta_enriq = Path("data/processed/oposicions_enriquit.csv")
     for paso in pasos:
         if paso == "download":
             filtre = Filtre(materia=args.materia, poblacio=args.poblacio, km=args.km,
@@ -70,28 +73,45 @@ def main(argv: list[str] | None = None) -> int:
                   f"hitos={r.hitos} descartadas={r.descartadas_materia} "
                   f"cache={r.cache_hits} fetched={r.fetched}")
         elif paso == "scan":
-            r = download.run_scan(raiz, pausa=args.pausa, progreso=_progreso)
-            print(f"[scan] nuevos={r.fichas_descubiertas} añadidos={r.procesos} "
-                  f"hitos={r.hitos} cache={r.cache_hits} fetched={r.fetched}")
+            filtre = Filtre(materia=args.materia, poblacio=args.poblacio, km=args.km,
+                            latitud=args.lat, longitud=args.lon)
+            r = download.run(raiz, filtre=filtre, pausa=args.pausa,
+                             max_paginas=args.max_paginas, progreso=_progreso)
+            print(f"[scan] descubiertas={r.fichas_descubiertas} procesos={r.procesos} "
+                  f"hitos={r.hitos} actualizadas={r.actualizadas} "
+                  f"cache={r.cache_hits} fetched={r.fetched}")
         elif paso == "clean":
-            resumen = build.limpiar_dataset(raiz / "oposicions.csv",
-                                            Path("data/processed/oposicions_procesado.csv"))
+            if not ruta_raw.exists() and args.step == "all":
+                print(f"[clean] omitido (no existe {ruta_raw})")
+                continue
+            resumen = build.limpiar_dataset(ruta_raw, ruta_proc)
             print(f"[clean] {resumen}")
         elif paso == "enrich":
-            resumen = enriquir_dataset(Path("data/processed/oposicions_procesado.csv"),
-                                             Path("data/reference/poblacio_municipis.csv"),
-                                             Path("data/processed/oposicions_enriquit.csv"),
-                                             informe_sin_match=Path("reports/calidad-municipios.csv"))
+            if not ruta_proc.exists() and args.step == "all":
+                print(f"[enrich] omitido (no existe {ruta_proc})")
+                continue
+            resumen = enriquir_dataset(ruta_proc,
+                                       Path("data/reference/poblacio_municipis.csv"),
+                                       ruta_enriq,
+                                       informe_sin_match=Path("reports/calidad-municipios.csv"))
             print(f"[enrich] {resumen}")
         elif paso == "charts":
-            staticos = generar_estaticos(Path("data/processed/oposicions_enriquit.csv"))
-            inter = generar_interactivos(Path("data/processed/oposicions_enriquit.csv"))
+            staticos = generar_estaticos(ruta_enriq)
+            inter = generar_interactivos(ruta_enriq)
             print(f"[charts] {len(staticos)} estáticos + {len(inter)} interactivos en reports/charts/")
         elif paso == "profile":
             destino = profile.run(raiz)
             print(f"[profile] reporte en {destino}")
-        else:
-            print(f"[pipeline] paso '{paso}': pendiente de implementar (US4+)")
+        elif paso == "validate":
+            res = build.validar_dataset(ruta_enriq)
+            print(f"[validate] ok={res['ok']} filas={res['filas']} "
+                  f"columnas={res['columnas']} procesos={res['procesos']} "
+                  f"errores={res['errores']}")
+        elif paso == "export":
+            res = build.exportar_dataset(ruta_enriq)
+            print(f"[export] filas_hitos={res['filas_hitos']} "
+                  f"procesos_exportados={res['procesos_exportados']} "
+                  f"ruta_procesos={res['ruta_procesos']}")
     return 0
 
 

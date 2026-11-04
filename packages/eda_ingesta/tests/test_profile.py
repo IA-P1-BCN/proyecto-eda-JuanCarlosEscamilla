@@ -21,7 +21,8 @@ def _csv_con_datos(tmp_path):
     return ruta
 
 
-def test_genera_reports_profiling_md(tmp_path):
+def test_genera_reports_profiling_md(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     _csv_con_datos(tmp_path)
     destino = run_profile(tmp_path)
     assert destino.exists() and destino.name == "profiling.md"
@@ -30,7 +31,8 @@ def test_genera_reports_profiling_md(tmp_path):
         assert seccion in texto
 
 
-def test_totales_y_calidad_en_el_reporte(tmp_path):
+def test_totales_y_calidad_en_el_reporte(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     _csv_con_datos(tmp_path)
     texto = run_profile(tmp_path).read_text()
     assert "procesos únicos: 1" in texto
@@ -38,6 +40,7 @@ def test_totales_y_calidad_en_el_reporte(tmp_path):
     assert "Informàtica" in texto  # materies del dataset
 
 
-def test_sin_csv_no_explota(tmp_path):
+def test_sin_csv_no_explota(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
     texto = run_profile(tmp_path).read_text()
     assert "Sin datos" in texto

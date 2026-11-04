@@ -37,3 +37,10 @@ def test_kpis_filtrados(tmp_path):
     df = calcular_kpis(cargar_datos(_csv(tmp_path)), municipio="Todos", grupo="Todos",
                        estado="abierta")
     assert df["proceso_id"].nunique() == 1   # solo la abierta
+
+
+def test_kpis_filtrados_por_rango_anios(tmp_path):
+    datos = cargar_datos(_csv(tmp_path))
+    df = calcular_kpis(datos, municipio="Todos", grupo="Todos", estado="Todos",
+                       rango_anios=(2025, 2026))
+    assert list(df["proceso_id"].unique()) == ["P2"]

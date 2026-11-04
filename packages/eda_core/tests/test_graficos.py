@@ -3,7 +3,14 @@
 import csv
 from pathlib import Path
 
-from eda_core.graficos import generar_estaticos, generar_interactivos
+import pandas as pd
+
+from eda_core.graficos import (
+    generar_estaticos,
+    generar_interactivos,
+    ranking_per_capita,
+    resumen_outliers_iqr,
+)
 
 _FILAS = []
 for i, (muni, pob, urb, dur, grupo, mes) in enumerate([
@@ -48,3 +55,19 @@ def test_genera_3_interactivos_html(tmp_path):
     for r in rutas:
         contenido = r.read_text()
         assert r.suffix == ".html" and "plotly" in contenido.lower()
+
+
+def test_resumen_outliers_iqr_detecta_cola():
+    s = pd.Series([2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 64.0])
+    res = resumen_outliers_iqr(s)
+    assert res["n_outliers"] == 1
+    assert res["max_outlier"] == 64.0
+    assert res["limite_superior"] < 64.0
+
+
+def test_ranking_per_capita_calcula_tasas(tmp_path):
+    df = pd.read_csv(_csv(tmp_path), dtype=str).fillna("")
+    top = ranking_per_capita(df, min_poblacion=1000, top_n=5)
+    assert len(top) <= 5
+    assert {"municipi", "urbanitzacio", "procesos", "por_1k", "plazas_por_1k"} <= set(top.columns)
+    assert "tavertet" not in top["municipi"].values  # 120 hab < 1000
