@@ -16,11 +16,13 @@ Los datos se descargan con un scraper propio (no hay API pública) y se cachean 
 Requisitos previos: **[`PREREQUISITES.md`](PREREQUISITES.md)** (`uv` + `go-task` el día 1; Quarto/Docker/astro llegan con su fase).
 
 ```bash
-task sync        # instala el monorepo completo (un venv, un lockfile)
-task test        # tests de todos los paquetes
-task pipeline    # descarga → limpia → exporta, en un comando
-task dashboard   # dashboard Streamlit local
-task --list      # todas las tareas disponibles (documentación viva)
+task sync         # instala el monorepo completo (un venv, un lockfile)
+task test         # tests de todos los paquetes
+task pipeline     # limpia → enriquece → valida → exporta, en un comando
+task dashboard    # dashboard Streamlit local
+task airflow-up   # levanta el stack Airflow (http://localhost:8080, admin/admin)
+task airflow-down # detiene el stack Airflow
+task --list       # todas las tareas disponibles (documentación viva)
 ```
 
 ## Estructura (monorepo uv — [ADR-0002](docs/adr/0002-monorepo-uv-workspaces.md))
@@ -47,5 +49,5 @@ notebooks/          # (US6) análisis narrativo — importa de eda_core, no cont
 - [x] US3 — Scraper CIDO (bootstrap + detector RSS) + profiling · `task download`
 - [x] US4-US5 — Limpieza TDD ([ADR-0005](docs/adr/0005-catalogos-limpieza-dedup.md)) + normalización per cápita
 - [x] US6 — Notebook EDA · [x] US7 — Gráficos (`task charts`) · [x] US8 — Informe ejecutivo PDF (`task informe`)
-- [x] US9 — Dashboard Streamlit local (`task dashboard`)
-- [ ] US10 (aplazado) · [ ] US11 — Airflow (`task airflow-up`) · [ ] US12 — Informe de calidad + presentación
+- [x] US9 — Dashboard Streamlit local (`task dashboard`) · [ ] US10 (aplazado)
+- [x] US11 — Airflow (`task airflow-up` / `task airflow-down`) · [ ] US12 — Informe de calidad + presentación
