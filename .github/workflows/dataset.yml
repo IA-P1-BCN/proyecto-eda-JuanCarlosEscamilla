@@ -2,8 +2,11 @@ name: dataset
 
 on:
   workflow_dispatch: {}        # botón manual — la primera importación la hizo el local
-  # schedule (cron) se activa en US11-12; ojo: 60 días sin actividad en el repo
-  # desactivan el cron automáticamente (documentado en PRD/PREREQUISITES)
+  schedule:
+    # Ejecución diaria a las 06:00 UTC (US12·T3, #63).
+    # Nota: GitHub Actions desactiva automáticamente los workflows con schedule tras 60 días
+    # de inactividad en el repositorio (documentado en PRD y PREREQUISITES).
+    - cron: '0 6 * * *'
 
 jobs:
   refresh:

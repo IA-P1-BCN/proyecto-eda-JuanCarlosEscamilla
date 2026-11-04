@@ -38,3 +38,15 @@ def test_slides_revealjs_y_taskfile():
     assert "revealjs" in contenido
     assert (RAIZ / "docs" / "presentacion" / "slides.html").exists()
 
+
+def test_workflow_dataset_cron_y_release_script():
+    """US12·T3 (#63): .github/workflows/dataset.yml activa schedule cron y dataset-release.sh soporta v1.0."""
+    wf = (RAIZ / ".github" / "workflows" / "dataset.yml").read_text(encoding="utf-8")
+    assert "schedule:" in wf
+    assert "cron:" in wf
+    assert "60" in wf  # límite de 60 días de inactividad documentado
+
+    script = (RAIZ / ".github" / "scripts" / "dataset-release.sh").read_text(encoding="utf-8")
+    assert "v1.0" in script or "gold" in script
+
+
