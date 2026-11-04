@@ -69,9 +69,12 @@ def test_run_idempotente_segunda_ejecucion_mismo_dia(tmp_path):
     t = CIDOFalso()
     run(tmp_path, fetch=t, max_paginas=2, hoy=hoy_fijo)
     csv_primera = (tmp_path / "oposicions.csv").read_bytes()
+    llamadas_tras_primera = t.llamadas
 
     r2 = run(tmp_path, fetch=t, max_paginas=2, hoy=hoy_fijo)
     assert r2.actualizadas == 0               # contenido idéntico → sin eventos
+    assert r2.fetched == 0                    # cero misses en caché; fichas desde caché
+    assert t.llamadas == llamadas_tras_primera + 1  # solo el RSS detector toca la red
     assert r2.cache_hits >= 50                # todo lo demás desde caché
     assert (tmp_path / "oposicions.csv").read_bytes() == csv_primera  # byte-idéntico
 
