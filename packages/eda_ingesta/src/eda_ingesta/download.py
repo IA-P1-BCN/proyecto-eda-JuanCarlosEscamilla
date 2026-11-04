@@ -165,10 +165,9 @@ def run(
         total = len(pendientes)
         ids_vistos: set[str] = set()
         for i, url in enumerate(sorted(pendientes), 1):
-            forzar = url in urls_feed
             proceso = _procesar_ficha(descarga, url, resumen, eventos,
                                       progreso=progreso, i=i, n=total, pausa=pausa,
-                                      forzar=forzar)
+                                      forzar=False)
             if proceso is not None:
                 if proceso.identificador and proceso.identificador in ids_vistos:
                     continue  # el mismo proceso llegó por feed (http→https) y listado

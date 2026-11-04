@@ -25,8 +25,14 @@ ORDEN_TAREAS = (
     "export",
 )
 
-# Raíz del proyecto: en el contenedor es /opt/airflow; en local es la raíz del repo
-RAIZ_PROYECTO = Path(__file__).resolve().parents[2]
+# Raíz del proyecto: en el contenedor es /opt/airflow (dags/eda_oposicions.py -> parents[1]);
+# en el repositorio local es parents[2] (airflow/dags/eda_oposicions.py -> parents[2]).
+_CANDIDATO_CONTENEDOR = Path(__file__).resolve().parents[1]
+RAIZ_PROYECTO = (
+    _CANDIDATO_CONTENEDOR
+    if (_CANDIDATO_CONTENEDOR / "data").exists()
+    else Path(__file__).resolve().parents[2]
+)
 
 
 def _base(raiz_base: Path | None = None) -> Path:
