@@ -14,7 +14,7 @@ def test_aplicar_estilo_configura_titulo_ejes():
     fig, ax = plt.subplots()
     ax.bar(["a", "b"], [1, 2])
     aplicar_estilo(ax, "P1 — ¿Cuánto tarda?", xlabel="meses", ylabel="procesos", leyenda=True)
-    assert ax.get_title() == "P1 — ¿Cuánto tarda?"
+    assert ax.get_title(loc="left") == "P1 — ¿Cuánto tarda?"
     assert ax.get_xlabel() == "meses"
     assert ax.get_ylabel() == "procesos"
     assert ax.get_legend() is not None

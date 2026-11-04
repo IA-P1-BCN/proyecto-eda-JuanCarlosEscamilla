@@ -24,10 +24,10 @@ tasks:
     cmds:
       - uv run eda-pipeline --step download --pausa {{.PAUSA | default 0.5}}{{if .MAX_PAGINAS}} --max-paginas {{.MAX_PAGINAS}}{{end}}
 
-  scan-rss:
-    desc: Refresco incremental vía RSS (1 petición + solo fichas nuevas)
+  charts:
+    desc: Genera los gráficos del informe (PNG) y del dashboard (plotly HTML)
     cmds:
-      - uv run eda-pipeline --step scan --pausa {{.PAUSA | default 0.5}}
+      - uv run eda-pipeline --step charts
 
   dashboard:
     desc: Dashboard Streamlit local (US9)
