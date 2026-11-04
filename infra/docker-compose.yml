@@ -15,10 +15,13 @@ x-airflow-common: &airflow-common
     AIRFLOW_UID: ${AIRFLOW_UID:-501}
     # el monorepo es importable dentro del contenedor:
     PYTHONPATH: /opt/airflow/packages/eda_ingesta/src:/opt/airflow/packages/eda_core/src:/opt/airflow/packages/eda_pipeline/src
+    _PIP_ADDITIONAL_REQUIREMENTS: "beautifulsoup4"
+  working_dir: /opt/airflow
   volumes:
-    - ./airflow/dags:/opt/airflow/dags
-    - ./packages:/opt/airflow/packages
-    - ./data:/opt/airflow/data
+    - ../airflow/dags:/opt/airflow/dags
+    - ../packages:/opt/airflow/packages
+    - ../data:/opt/airflow/data
+    - ../reports:/opt/airflow/reports
   user: "${AIRFLOW_UID:-501}:0"
   depends_on:
     postgres:

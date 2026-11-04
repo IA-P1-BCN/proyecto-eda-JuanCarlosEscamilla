@@ -80,3 +80,16 @@ def test_callables_dag_invocan_modulos_monorepo(monkeypatch, tmp_path):
     mod.task_export(raiz_base=tmp_path)
 
     assert llamadas == ["scan_download", "profile", "clean", "enrich", "validate", "export"]
+
+
+def test_compose_monta_monorepo_y_reports():
+    """infra/docker-compose.yml configura PYTHONPATH y monta airflow/dags, packages, data y reports."""
+    compose = (Path(__file__).resolve().parents[3] / "infra" / "docker-compose.yml").read_text(encoding="utf-8")
+    assert "PYTHONPATH:" in compose
+    assert "/opt/airflow/packages/eda_ingesta/src" in compose
+    assert "/opt/airflow/packages/eda_core/src" in compose
+    assert "../airflow/dags:/opt/airflow/dags" in compose
+    assert "../packages:/opt/airflow/packages" in compose
+    assert "../data:/opt/airflow/data" in compose
+    assert "../reports:/opt/airflow/reports" in compose
+
