@@ -55,7 +55,7 @@ def test_enriquir_informa_los_sin_match(tmp_path):
     resumen = enriquir_dataset(_raw(tmp_path), "data/reference/poblacio_municipis.csv",
                                destino, municipis_override=MUNICIPIS,
                                informe_sin_match=informe)
-    assert resumen["sin_match"] == 1   # P3: Diputació = supramunicipal
+    assert resumen["sin_match_procesos"] == 1   # P3: Diputació = supramunicipal
     with informe.open() as f:
         sin = list(csv.DictReader(f))
     assert sin[0]["proceso_id"] == "P3"
