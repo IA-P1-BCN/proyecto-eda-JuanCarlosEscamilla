@@ -29,13 +29,15 @@ def run(raiz: Path, destino: Path | None = None) -> Path:
 
     df = pd.read_csv(ruta_csv, dtype=str).fillna("")
     procesos = df["proceso_id"].nunique()
+    fechas = df.loc[df["fecha_convocatoria"] != "", "fecha_convocatoria"]
+    rango = f"{fechas.min()} → {fechas.max()}" if len(fechas) else "sin fechas"
     lineas += [
         "## Totales",
         "",
         f"- filas (hitos): {len(df)}",
         f"- procesos únicos: {procesos}",
         f"- con plaza publicada: {(df['plazas'] != '').sum()}",
-        f"- rango fecha_convocatoria: {df['fecha_convocatoria'].min()} → {df['fecha_convocatoria'].max()}",
+        f"- rango fecha_convocatoria: {rango}",
         "",
         "## Nulos por columna (top 10)",
         "",
