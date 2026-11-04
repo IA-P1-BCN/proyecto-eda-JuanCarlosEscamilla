@@ -1,5 +1,7 @@
 # Proyecto EDA — Oposicions CIDO 🎓
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/IA-P1-BCN/proyecto-eda-JuanCarlosEscamilla/blob/main/notebooks/eda.ipynb)
+
 Análisis exploratorio de datos (EDA) sobre los **procesos selectivos de informática** en los ayuntamientos de la provincia de Barcelona. Bootcamp Factoría F5 · alcance y plan en [`docs/PRD.md`](docs/PRD.md).
 
 ## ¿De dónde salen los datos?
