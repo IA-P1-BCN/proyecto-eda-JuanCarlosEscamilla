@@ -50,3 +50,15 @@ def test_workflow_dataset_cron_y_release_script():
     assert "v1.0" in script or "gold" in script
 
 
+def test_cierre_readme_y_prd_checklists():
+    """US12·T4 (#64): README y PRD tienen todos los ítems de estado/DoD marcados como completados."""
+    readme = (RAIZ / "README.md").read_text(encoding="utf-8")
+    assert "- [x] US12" in readme
+    assert "- [ ]" not in readme
+    assert "task slides" in readme
+
+    prd = (RAIZ / "docs" / "PRD.md").read_text(encoding="utf-8")
+    assert "- [ ]" not in prd
+
+
+

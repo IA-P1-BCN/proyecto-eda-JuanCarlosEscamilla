@@ -22,6 +22,8 @@ task pipeline     # limpia → enriquece → valida → exporta, en un comando
 task dashboard    # dashboard Streamlit local
 task airflow-up   # levanta el stack Airflow (http://localhost:8080, admin/admin)
 task airflow-down # detiene el stack Airflow
+task informe      # renderiza el informe ejecutivo PDF (Quarto/typst)
+task slides       # renderiza la presentación ejecutiva 5 min (Quarto revealjs)
 task --list       # todas las tareas disponibles (documentación viva)
 ```
 
@@ -49,5 +51,6 @@ notebooks/          # (US6) análisis narrativo — importa de eda_core, no cont
 - [x] US3 — Scraper CIDO (bootstrap + detector RSS) + profiling · `task download`
 - [x] US4-US5 — Limpieza TDD ([ADR-0005](docs/adr/0005-catalogos-limpieza-dedup.md)) + normalización per cápita
 - [x] US6 — Notebook EDA · [x] US7 — Gráficos (`task charts`) · [x] US8 — Informe ejecutivo PDF (`task informe`)
-- [x] US9 — Dashboard Streamlit local (`task dashboard`) · [ ] US10 (aplazado)
-- [x] US11 — Airflow (`task airflow-up` / `task airflow-down`) · [ ] US12 — Informe de calidad + presentación
+- [x] US9 — Dashboard Streamlit local (`task dashboard`) · [x] US10 — Publicación vía releases de dataset (Render aplazado por decisión del PO)
+- [x] US11 — Airflow (`task airflow-up` / `task airflow-down`)
+- [x] US12 — Informe de calidad ([`docs/informe-calidad-datos.md`](docs/informe-calidad-datos.md)) + presentación (`task slides`)

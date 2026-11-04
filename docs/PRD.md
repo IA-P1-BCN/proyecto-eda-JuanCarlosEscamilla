@@ -163,10 +163,10 @@ issue → branch feat/us3-scraper-cido → tests (rojo) → código (verde)
 
 **Definition of Done común** (además del **AC de la issue**, que es la fuente de verdad — formato y proceso en `docs/agents/acceptance-criteria.md`):
 
-- [ ] Tests escritos antes que la función y en verde
-- [ ] Notebook (si toca) se ejecuta Restart & Run All sin errores
-- [ ] Docs afectados actualizados (README / GLOSSARY / ADR)
-- [ ] PR revisado y mergeado con conventional commit
+- [x] Tests escritos antes que la función y en verde
+- [x] Notebook (si toca) se ejecuta Restart & Run All sin errores
+- [x] Docs afectados actualizados (README / GLOSSARY / ADR)
+- [x] PR revisado y mergeado con conventional commit
 
 ---
 
