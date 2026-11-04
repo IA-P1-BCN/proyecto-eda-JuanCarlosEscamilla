@@ -56,3 +56,9 @@ tasks:
     cmds:
       - task --list
     silent: true
+
+  informe:
+    desc: Renderiza el informe ejecutivo PDF (Quarto/typst)
+    cmds:
+      - mkdir -p docs/informe/charts && cp reports/charts/*.png docs/informe/charts/
+      - quarto render docs/informe/informe.qmd
