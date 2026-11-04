@@ -194,43 +194,43 @@ issue → branch feat/us3-scraper-cido → tests (rojo) → código (verde)
 ### US3 — Ingesta reproducible y profiling 🟢🔴
 - 🎓 Descargar un CSV a mano y re-descargar cada sesión.
 - 🏭 Orquestación (Airflow), zona raw inmutable en S3, cargas incrementales, reintentos.
-- 🧪 **No hay API: hay que scrapea** (como en muchas empresas reales). `src/eda/scrape.py` con `requests` + `BeautifulSoup`: filtra por **materia 24 (Informàtica. Noves tecnologies)** → ~5 páginas de listado y **237 fichas** (crawl ligero); **educado** (pausa entre peticiones, User-Agent propio), **resumible** (cache HTML en `data/raw/html/`, no re-pide lo ya descargado), **idempotente** (re-ejecutar no duplica). Los adjuntos viven en `diba.cat/documents` y DOGC: cada enlace se registra con su **slug semántico** (`publtaubor`, `restexambo`, `listexamop`…) y los fallos se **clasifican para acción** en el informe de calidad: `E1 caído` (404/timeout tras reintentos) · `E2 intranet genérica` (enlaza al portal del ayuntamiento, no al documento concreto) · `E3 PDF no parseable` (formato inesperado). `src/eda/profile.py` → reporte de nulos/tipos/valores raros por campo, insumo del informe de calidad.
+- 🧪 **No hay API: hay que scrapea** (como en muchas empresas reales). `packages/eda_ingesta/src/eda_ingesta/` (`client.py`, `crawl.py`, `fichas.py`, `download.py`) con `urllib.request` + `BeautifulSoup`: filtra por **materia 24 (Informàtica. Noves tecnologies)** y proximidad configurable (`Vic`, `45 km`) → **814 procesos** y **2.786 hitos** (crawl ligero); **educado** (pausa entre peticiones, User-Agent propio), **resumible** (cache HTML en `data/raw/html/`, no re-pide lo ya descargado), **idempotente** (re-ejecutar no duplica). Los adjuntos viven en `diba.cat/documents` y DOGC: cada enlace se registra con su **slug semántico** (`publtaubor`, `restexambo`, `listexamop`…) y los fallos se **clasifican para acción** en el informe de calidad: `E1 caído` (404/timeout tras reintentos) · `E2 intranet genérica` (enlaza al portal del ayuntamiento, no al documento concreto) · `E3 PDF no parseable` (formato inesperado). `packages/eda_ingesta/src/eda_ingesta/profile.py` → reporte de nulos/tipos/valores raros por campo (`reports/profiling.md`), insumo del informe de calidad.
 - **AC**: issue #3 — pasos de verificación (fuente de verdad del DoD)
 
 ### US4 — Limpieza con TDD 🟢🟡🔴
 - 🎓 Arreglos celda a celda, sin registrar el porqué.
 - 🏭 Capa de transformaciones versionada (dbt), cada regla revisada e idempotente.
-- 🧪 Funciones puras en `src/eda/clean.py`, **test primero para cada una**: parsear la fecha de convocatoria desde el identificador (`20230127O46` → 2023-01-27) y validarla contra las fechas de la ficha; extraer plazas del título ("N placa/places de…" — catalán y castellano); normalizar categorías (grupos de titulación A1…C2, sistema de selección); fechas dd/mm/yyyy → datetime; procesos sin hitos de resolución (¿incompletos o vigentes?). Cada decisión grande = un ADR (`docs/adr/`).
+- 🧪 Funciones puras en `packages/eda_core/src/eda_core/clean.py` y `packages/eda_ingesta/src/eda_ingesta/parsers.py`, **test primero para cada una**: parsear la fecha de convocatoria desde el identificador (`20230127O46` → 2023-01-27) y validarla contra las fechas de la ficha; extraer plazas del título ("N placa/places de…" — catalán y castellano); normalizar categorías (grupos de titulación A1…C2, sistema de selección); fechas dd/mm/yyyy → datetime; procesos sin hitos de resolución (¿incompletos o vigentes?). Cada decisión grande = un ADR (`docs/adr/`).
 - **AC**: issue #4 — pasos de verificación (fuente de verdad del DoD)
 
 ### US5 — Enriquecimiento y normalización 🟠
 - 🎓 Comparar totales absolutos (Barcelona ciudad siempre "gana").
 - 🏭 Joins versionados contra dimensiones certificadas; métricas normalizadas por diseño.
-- 🧪 `merge` con **población por municipio** (INE/DIBA) → `places_per_mil_hab`; enriquecer con comarca y tamaño de municipio (urbano/rural por población) para comparar segmentos; feature clave: `durada_mesos` = resolución − convocatoria. **Enriquecimiento 2 (*stretch, oportunista*): aspirantes desde PDFs — bajo ADR-0004 (RGPD)** — `pdf_aspirants.py` (pypdf): descarga **en memoria** (nunca a disco/caché) de PDFs de bolsa/resultados (`publtaubor`/`restexambo`) → cuenta filas → `n_aspirantes` + puntuación **agregada** (media/mediana/max) → `competencia = n_aspirantes / plazas`. **Nunca se extraen nombres, NIF (ni enmascarados) ni puntuaciones individuales; el contenido del PDF se descarta tras el cálculo.** Cada fallo queda clasificado (E1/E2/E3) con acción sugerida. Si el parseo en memoria no es viable, el stretch muere sin sustituto.
+- 🧪 `merge` con **población por municipio** (`data/reference/poblacio_municipis.csv`, Wikidata SPARQL) en `packages/eda_core/src/eda_core/enrich.py` y `packages/eda_ingesta/src/eda_ingesta/poblacio.py` → `places_per_mil_hab`; enriquecer con distancia geodésica (`dist_km_vic`) y tamaño de municipio (`urbanitzacio`: `urbano` / `intermedi` / `rural` por población) para comparar segmentos; feature clave: `durada_mesos` = resolución − convocatoria. **Enriquecimiento 2 (*stretch, oportunista*): aspirantes desde PDFs — bajo ADR-0004 (RGPD)** — `pdf_aspirants.py` (pypdf): descarga **en memoria** (nunca a disco/caché) de PDFs de bolsa/resultados (`publtaubor`/`restexambo`) → cuenta filas → `n_aspirantes` + puntuación **agregada** (media/mediana/max) → `competencia = n_aspirantes / plazas`. **Nunca se extraen nombres, NIF (ni enmascarados) ni puntuaciones individuales; el contenido del PDF se descarta tras el cálculo.** Cada fallo queda clasificado (E1/E2/E3) con acción sugerida. Si el parseo en memoria no es viable, el stretch muere sin sustituto.
 - **AC**: issue #5 — pasos de verificación (fuente de verdad del DoD)
 
 ### US6 — Análisis EDA + feature engineering 🟢🟡🟠
 - 🎓 Celdas ad-hoc; el resultado vive solo en el notebook.
 - 🏭 Notebooks solo para explorar; lo reutilizable se promueve a módulo revisado.
-- 🧪 Notebook narrativo (markdown entre celdas) que **importa** la lógica de `src/eda/`: univariado (≥3 variables: duración, plazas, grupo de titulación), bivariado (≥3: duración por grupo/sistema, plazas vs población, mes de convocatoria vs grupo), outliers por IQR (duraciones extremas: ¿procesos atascados?), `groupby`/`agg`/`pivot_table`, ≥3 features nuevas, matriz de correlación + heatmap, tendencias temporales (convocatorias por mes/año) con transformación justificada (**media móvil 12 meses** sobre la serie mensual, o **escala log** para la distribución sesgada de duraciones). Responde por escrito las 3 preguntas de US1.
+- 🧪 Notebook narrativo (`notebooks/eda.ipynb`, markdown entre celdas) que **importa** la lógica de `packages/eda_core/`: univariado (≥3 variables: duración, plazas, estado/grupo), bivariado (≥3: duración por grupo/sistema, plazas vs población, tamaño de municipio y mes de convocatoria vs grupo), outliers por IQR (duraciones extremas: ¿procesos atascados?), `groupby`/`agg`/`pivot_table`, ≥3 features nuevas, matriz de correlación + heatmap, tendencias temporales (convocatorias por mes/año) con transformación justificada (**media móvil 12 meses** sobre la serie mensual, o **escala log** para la distribución sesgada de duraciones). Responde por escrito las 3 preguntas de US1.
 - **AC**: issue #6 — pasos de verificación (fuente de verdad del DoD)
 
 ### US7 — Visualizaciones 🟢🟠
 - 🎓 5 gráficos con los colores por defecto.
 - 🏭 Sistema de diseño, tipo de gráfico elegido por pregunta, accesibilidad.
-- 🧪 Estáticos (matplotlib/seaborn) para el informe + interactivos (plotly) para el dashboard; una función de estilo compartida; ≥5 con título, ejes y leyenda. Estrellas previstas: boxplot de duración por grupo de titulación, ranking de municipios en plazas per cápita, heatmap de estacionalidad (mes × año), serie mensual con media móvil.
+- 🧪 Estáticos (matplotlib/seaborn) para el informe + interactivos (plotly) para el dashboard en `packages/eda_core/src/eda_core/graficos.py` y `viz.py`; una función de estilo compartida; ≥5 con título, ejes y leyenda. Estrellas previstas: boxplot de duración por grupo de titulación, ranking de municipios en plazas per cápita, estacionalidad mensual, serie mensual con media móvil.
 - **AC**: issue #7 — pasos de verificación (fuente de verdad del DoD)
 
 ### US8 — Informe ejecutivo 🟡🔴
 - 🎓 Capturas de notebook pegadas en un doc.
 - 🏭 Narrativa dirigida a decisiones ("so what"), rebuild con un comando.
-- 🧪 Quarto: `docs/informe/informe.md` → PDF de 1–2 páginas con 3–4 gráficos, cero código, estructura de historia (situación → hallazgo → recomendación). Auditor: "el CEO no lee código".
+- 🧪 Quarto: `docs/informe/informe.qmd` → PDF (`docs/informe/informe.pdf`) de 1–2 páginas con 3–4 gráficos, cero código, estructura de historia (situación → hallazgo → recomendación). Auditor: "el CEO no lee código".
 - **AC**: issue #8 — pasos de verificación (fuente de verdad del DoD)
 
 ### US9 — Dashboard interactivo 🔴🟠
 - 🎓 "Aquí tienes mi repo".
 - 🏭 App desplegada, acceso controlado, monitorizada.
-- 🧪 Streamlit (`app.py` + `src/eda/`): el CEO filtra por municipio/grupo de titulación/estado/fecha y ve los KPIs (duración media por grupo, plazas per cápita, calendario de convocatorias); usa el dataset limpio del pipeline, sin recompute del EDA.
+- 🧪 Streamlit (`packages/eda_app/src/eda_app/app.py` + `eda_core`): el CEO filtra por municipio/grupo de titulación/estado/fecha y ve los KPIs (duración por grupo, plazas per cápita, calendario de convocatorias); usa el dataset limpio del pipeline, sin recompute del EDA.
 - **AC**: issue #9 — pasos de verificación (fuente de verdad del DoD)
 
 ### US10 — Deploy y publicación 🔴🧪
