@@ -236,7 +236,7 @@ issue → branch feat/us3-scraper-cido → tests (rojo) → código (verde)
 ### US10 — Deploy y publicación 🔴🧪
 - 🎓 URL del repo como "entrega".
 - 🏭 CI/CD desde `main`, contenedor, rollbacks, monitoreo.
-- 🧪 **Docker real** (Dockerfile abajo) + **render.yaml** → Render builda la imagen y auto-despliega desde `main`; URL pública. Informe + slides como static site (Render static o Pages mirror). *Free tier: duerme a los 15 min; ~30 s de cold start — aceptable para demo.*
+- 🧪 **DECISIÓN DEL PO (2026-11-04): deploy en Render APLAZADO** — de momento el despliegue es **docker compose local** (US11) y la publicación pública la cubren los **releases del dataset** (bronze/silver ya publicados). El Dockerfile queda listo para activar Render cuando se decida.
 - **AC**: issue #10 — pasos de verificación (fuente de verdad del DoD)
 
 ### US11 — Orquestación real con Airflow (Docker) 🔴🧪
