@@ -71,6 +71,19 @@ def test_colab_badge_y_bootstrap_notebook():
     assert "google.colab" in nb
     assert "/content/repo/packages/eda_core/src" in nb
     assert "releases/download/dataset-v1.0/oposicions_enriquit.csv" in nb
+    assert "formato largo" in nb.lower() and "1 fila = 1 hito" in nb.lower()
+
+
+def test_requirements_txt_compatibilidad_client_specs():
+    """CLIENT_SPECS.md entregable #4: existe requirements.txt en raíz y task requirements en Taskfile.yml."""
+    req = RAIZ / "requirements.txt"
+    assert req.exists(), f"Falta {req}"
+    contenido = req.read_text(encoding="utf-8")
+    for paquete in ("pandas", "numpy", "matplotlib", "seaborn", "plotly", "streamlit"):
+        assert paquete in contenido, f"Falta {paquete} en requirements.txt"
+
+    taskfile = (RAIZ / "Taskfile.yml").read_text(encoding="utf-8")
+    assert "requirements:" in taskfile
 
 
 

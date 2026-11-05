@@ -7,9 +7,10 @@ Cuando un usuario abre `notebooks/eda.ipynb` en Google Colab desde GitHub, Colab
 ## What Changes
 
 - **`README.md`**: Añade el badge oficial `Open in Colab` apuntando a `notebooks/eda.ipynb` en `main`.
-- **`notebooks/eda.ipynb`**: Añade en la celda inicial de configuración un bloque condicional `if "google.colab" in sys.modules:` que clona el repositorio para exponer `packages/eda_core/src` en `sys.path` y descarga `oposicions_enriquit.csv` desde el release `dataset-v1.0`.
+- **`notebooks/eda.ipynb`**: Añade en la celda inicial de configuración un bloque condicional `if "google.colab" in sys.modules:` que clona el repositorio para exponer `packages/eda_core/src` en `sys.path` y descarga `oposicions_enriquit.csv` desde el release `dataset-v1.0`, además de aclarar en el Paso 3 la distinción entre granularidad por hito y por proceso.
+- **`requirements.txt` y `Taskfile.yml`**: Genera `requirements.txt` desde `uv.lock` para compatibilidad con `CLIENT_SPECS.md` / Colab y expone la tarea `requirements` en `Taskfile.yml`.
 
 ## Impact
 
 - Specs afectadas: `pipeline-eda`.
-- Archivos afectados: `README.md`, `notebooks/eda.ipynb`, `packages/eda_pipeline/tests/test_us12_entregables.py`.
+- Archivos afectados: `README.md`, `notebooks/eda.ipynb`, `requirements.txt`, `Taskfile.yml`, `packages/eda_pipeline/tests/test_us12_entregables.py`.
