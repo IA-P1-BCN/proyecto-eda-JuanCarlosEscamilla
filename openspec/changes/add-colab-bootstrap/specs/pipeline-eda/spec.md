@@ -11,5 +11,5 @@ El notebook `notebooks/eda.ipynb` SHALL importar la paleta, estilo y funciones r
 
 #### Scenario: compatibilidad con Google Colab y badge en README
 
-- **WHEN** se inspeccionan `README.md` y `notebooks/eda.ipynb`
-- **THEN** `README.md` incluye el badge `colab-badge.svg` hacia `notebooks/eda.ipynb` y la primera celda de código del notebook configura `packages/eda_core/src` y descarga `oposicions_enriquit.csv` del release cuando se ejecuta en `google.colab`
+- **WHEN** se inspeccionan `README.md`, `requirements.txt` y `notebooks/eda.ipynb`
+- **THEN** `README.md` incluye el badge `colab-badge.svg` hacia `notebooks/eda.ipynb`, existe `requirements.txt` en la raíz exportado desde `uv.lock`, y la primera celda de código del notebook configura `packages/eda_core/src` y descarga `oposicions_enriquit.csv` del release cuando se ejecuta en `google.colab`
