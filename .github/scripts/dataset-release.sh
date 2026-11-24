@@ -16,8 +16,8 @@ REPO="${GITHUB_REPOSITORY:-IA-P1-BCN/proyecto-eda-JuanCarlosEscamilla}"
 
 [ -f "$CSV" ] || { echo "no existe $CSV — ejecuta antes: task download / task pipeline" >&2; exit 1; }
 
-# Tag content-addressed (salvo tag semántico explícito dataset-v1.0)
-HASH=$(sha256sum "$CSV" | cut -c1-12)
+# Tag content-addressed sobre contenido canónico (sin tokens de firma CIDO) — salvo dataset-v1.0
+HASH=$(bash "$(dirname "$0")/dataset-hash.sh" "$CSV")
 TAG="${TAG_FIJO:-dataset-$NIVEL-$HASH}"
 FILAS=$(( $(wc -l < "$CSV") - 1 ))
 
